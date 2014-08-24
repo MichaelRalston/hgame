@@ -11,7 +11,9 @@ import System.Time (TimeDiff)
 import qualified Data.ByteString (concat)
 import Control.Concurrent.MVar (modifyMVar, withMVar)
 import Data.ByteString.Lazy (toChunks)
+import Data.ByteString.Builder (toLazyByteString)
 import Data.Aeson (object, (.=), encode, decode')
+import Data.Aeson.Encode (encodeToByteStringBuilder)
 import Network.WebSockets (DataMessage (..))
 import qualified Network.WebSockets (DataMessage(Text))
 import Data.Maybe (mapMaybe)
@@ -56,7 +58,7 @@ buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
 	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> DataMessage
-getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
+getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ seq (toLazyByteString $ encodeToByteStringBuilder $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]) "Test-with-seq"
   where
 	screenObject = renderer state pid
 	gamelogObject = toJSON $ filterGamelogs logs pid
