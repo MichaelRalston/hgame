@@ -55,7 +55,8 @@ wsApp gameMap connectionMap pendingConnection = do
 	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
-handleConnectionInput gameMap connectionMap connectionId = 
+handleConnectionInput gameMap connectionMap connectionId = do
+	_ <- putStrLn "handling input"
 	join <$> twiddle connectionId connectionMap
 		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> do
 			msg <- WS.receiveDataMessage connection
@@ -74,6 +75,7 @@ tickGame gameMap connectionMap gameId = do
 doTick :: ConnectionMap -> GameMap -> GameId -> ClockTime -> IO ()
 doTick connectionMap gameMap gameId startTime = do
 	threadDelay 1000000 -- microseconds: so one second.
+	putStrLn "Ticking"
 	currentTime' <- join <$> twiddle gameId gameMap (\GameData {game, players} -> do
 			currentTime <- getClockTime
 			let timeDelta = diffClockTimes currentTime startTime
