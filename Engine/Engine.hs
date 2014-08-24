@@ -102,5 +102,8 @@ sendUpdates connectionMap updates = void $ sequence $ map (uncurry $ sendMessage
 sendMessageToPlayer :: ConnectionMap -> ConnectionId -> WS.DataMessage -> IO ()
 sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) -> do
 		putStrLn "we're about to send a message!!"
+		putStrLn $ show msg
+		putStrLn "-----"
 		WS.sendDataMessage connection msg
+		putStrLn "uh, wat"
 	)
