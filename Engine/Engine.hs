@@ -82,8 +82,11 @@ doTick connectionMap gameMap gameId startTime = do
 			putStrLn "in the ticking twiddler"
 			currentTime <- getClockTime
 			let timeDelta = diffClockTimes currentTime startTime
+			putStrLn "about to run tick"
 			updates <- runTick game timeDelta
+			putStrLn "ran tick, got updates"
 			sendUpdates connectionMap $ fixUpdates players updates
+			putStrLn "ran tick, sent updates, wut"
 			finished <- isFinished game
 			case finished of
 				True -> return Nothing
