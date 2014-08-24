@@ -9,7 +9,8 @@ import Data.ByteString (ByteString)
 import qualified Data.Map as Map
 
 handleInput :: ET.InputHandler GlueState Int Int
-handleInput state _ input = (state, [ET.GLBroadcast [ET.GLMMove [input] 0]])
+handleInput state _ (ET.UIClick input) = (state, [ET.GLBroadcast [ET.GLMMove [input] 0, ET.GLMPlayerAction 0 "clicked"]])
+handleInput state _ (ET.UIDrag entity zone) = (state, [ET.GLBroadcast [ET.GLMMove [entity] zone, ET.GLMPlayerAction 0 "dragged"]])
 
 finished :: GlueState -> Bool
 finished _ = False

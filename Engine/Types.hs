@@ -13,6 +13,7 @@ module Engine.Types
 	, InputHandler
 	, Gamelog (..)
 	, GamelogMessage (..)
+	, UserInput (..)
 	, toJSON
 	, Game (..)
 	) where
@@ -22,45 +23,51 @@ import System.Time (TimeDiff)
 import System.Random (StdGen)
 import Data.ByteString (ByteString)
 import Control.Concurrent.MVar (MVar)
-import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), encode)
+import Control.Applicative ((<*>), (<$>))
+import Control.Monad (mzero)
+import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), encode, parseJSON)
 
-data Game = forall a b c. (GameState a, EntityId b, ZoneId c) => Game
-	{ playerRenderer :: a -> PlayerIndex -> Screen c b
+data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
+	{ playerRenderer :: state -> PlayerIndex -> Screen zone entity
 --	, newGame :: [PlayerIndex] -> StdGen -> Maybe a -- TODO: reevaluate. Maybe this needs to go?
-	, tick :: a -> TimeDiff -> GameDelta a b c
-	, handleInput :: InputHandler a b c
-	, getPlayers :: a -> [PlayerIndex] -- TODO: reevaluate. 
-	, state :: MVar a
+	, tick :: state -> TimeDiff -> GameDelta state entity zone
+	, handleInput :: InputHandler state entity zone
+	, getPlayers :: state -> [PlayerIndex] -- TODO: reevaluate. 
+	, state :: MVar state
 --	, parseEntity :: ByteString -> Maybe b
-	, finished :: a -> Bool
+	, finished :: state -> Bool
 	}
 	
-type GameDelta a b c = (a, [Gamelog b c])
-type Screen a b = Map (a) (ZoneDisplay, [ScreenEntity b])
-type InputHandler a b c = a -> PlayerIndex -> b -> GameDelta a b c
+type GameDelta state entity zone = (state, [Gamelog entity zone])
+type Screen zone entity = Map (zone) (ZoneDisplay, [ScreenEntity entity])
+type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> GameDelta state entity zone
 
-class (Eq a, FromJSON a, ToJSON a, Show a) => EntityId a
-class (Eq a, ToJSON a, Show a) => ZoneId a
-class GameState a
+class (Eq entity, FromJSON entity, ToJSON entity, Show entity) => EntityId entity
+class (Eq zone, FromJSON zone, ToJSON zone, Show zone) => ZoneId zone
+class GameState state
 
 -- This is just an entry into a big lookup table.
 type PlayerIndex = Int -- TODO: verify that this is int.
 
-data Gamelog a b
-    = GLBroadcast [GamelogMessage a b]
+data Gamelog entity zone
+    = GLBroadcast [GamelogMessage entity zone]
     | GLPrivate
         { glPlayer :: [PlayerIndex]
-        , content :: [GamelogMessage a b]
+        , content :: [GamelogMessage entity zone]
         }
     | GLAllBut
         { glPlayerList :: [PlayerIndex]
-        , content :: [GamelogMessage a b]
+        , content :: [GamelogMessage entity zone]
         }
 	deriving Show
-             
-data GamelogMessage a b -- where a is EntityId, b is ZoneId
+
+data UserInput entity zone
+	= UIClick entity
+	| UIDrag entity zone
+	
+data GamelogMessage entity zone
 	= GLMDisplay String
-	| GLMMove [a] b
+	| GLMMove [entity] zone
     | GLMPlayerAction PlayerIndex String
     | GLMTwoPlayerAction PlayerIndex String PlayerIndex -- "first did something to second".
 	deriving Show
@@ -74,28 +81,37 @@ data ZoneDisplay
 	= ZDGuess -- "guess where it goes"; to be extended with something actually useful.
 	deriving Show
 
-data ScreenEntity a = SE
-	{ eId :: a
+data ScreenEntity entity = SE
+	{ eId :: entity
 	, eDisplay :: ScreenDisplay
 	, eActive :: Bool
 	}
 	deriving Show
 
+instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) where
+	parseJSON (Object v) = do
+		action <- v .: "action"
+		case (action :: String) of
+			"click" -> UIClick <$> v .: "entity"
+			"drag" -> UIDrag <$> v .: "entity" <*> v .: "zone"
+			otherwise -> fail "unknown action"
+	parseJSON _ = mzero
+	
 instance ToJSON ScreenDisplay where
 	toJSON (SDImage u) = object ["uri" .= toJSON u]
 
 instance ToJSON ZoneDisplay where
 	toJSON ZDGuess = String "guess"
 	
-instance EntityId a => ToJSON (ScreenEntity a) where
+instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eActive} = object ["entityId" .= toJSON eId, "display" .= toJSON eDisplay, "active" .= toJSON eActive]
 
-instance (EntityId a, ZoneId b) => ToJSON (GamelogMessage a b) where
+instance (EntityId entity, ZoneId zone) => ToJSON (GamelogMessage entity zone) where
 	toJSON (GLMDisplay str) = object ["display" .= toJSON str]
 	toJSON (GLMMove entities zone) = object ["move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
 	
-instance (EntityId b, ZoneId a) => ToJSON (Screen a b) where
+instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON = toJSON
 
-instance EntityId a => ToJSON (ZoneDisplay, [ScreenEntity a]) where
+instance EntityId entity => ToJSON (ZoneDisplay, [ScreenEntity entity]) where
 	toJSON (zd, ses) = object ["display" .= toJSON zd, "entities" .= toJSON ses]
