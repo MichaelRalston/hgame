@@ -68,15 +68,18 @@ data GamelogMessage a b -- where a is EntityId, b is ZoneId
 data ScreenDisplay
 	= SDImage String
 	| SDText String	
+	deriving Show
 
 data ZoneDisplay
 	= ZDGuess -- "guess where it goes"; to be extended with something actually useful.
+	deriving Show
 
 data ScreenEntity a = SE
 	{ eId :: a
 	, eDisplay :: ScreenDisplay
 	, eActive :: Bool
 	}
+	deriving Show
 
 instance ToJSON ScreenDisplay where
 	toJSON (SDImage u) = object ["uri" .= toJSON u]
