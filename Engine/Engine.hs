@@ -85,7 +85,6 @@ doTick connectionMap gameMap gameId startTime = do
 			putStrLn "about to run tick"
 			updates <- runTick game timeDelta
 			putStrLn "ran tick, got updates"
-			putStrLn $ show updates
 			sendUpdates connectionMap $ fixUpdates players updates
 			putStrLn "ran tick, sent updates, wut"
 			finished <- isFinished game
@@ -101,4 +100,7 @@ sendUpdates :: ConnectionMap -> [(ConnectionId, WS.DataMessage)] -> IO ()
 sendUpdates connectionMap updates = void $ sequence $ map (uncurry $ sendMessageToPlayer connectionMap ) updates
 
 sendMessageToPlayer :: ConnectionMap -> ConnectionId -> WS.DataMessage -> IO ()
-sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) -> WS.sendDataMessage connection msg)
+sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) -> do
+		putStrLn "we're about to send a message!!"
+		WS.sendDataMessage connection msg
+	)
