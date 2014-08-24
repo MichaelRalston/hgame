@@ -39,8 +39,8 @@ type GameDelta a b c = (a, [Gamelog b c])
 type Screen a b = Map (a) (ZoneDisplay, [ScreenEntity b])
 type InputHandler a b c = a -> PlayerIndex -> b -> GameDelta a b c
 
-class (Eq a, FromJSON a, ToJSON a) => EntityId a
-class (Eq a, ToJSON a) => ZoneId a
+class (Eq a, FromJSON a, ToJSON a, Show a) => EntityId a
+class (Eq a, ToJSON a, Show a) => ZoneId a
 class GameState a
 
 -- This is just an entry into a big lookup table.
@@ -56,12 +56,14 @@ data Gamelog a b
         { glPlayerList :: [PlayerIndex]
         , content :: [GamelogMessage a b]
         }
+	deriving Show
              
 data GamelogMessage a b -- where a is EntityId, b is ZoneId
 	= GLMDisplay String
 	| GLMMove [a] b
     | GLMPlayerAction PlayerIndex String
     | GLMTwoPlayerAction PlayerIndex String PlayerIndex -- "first did something to second".
+	deriving Show
 
 data ScreenDisplay
 	= SDImage String

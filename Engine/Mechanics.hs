@@ -27,14 +27,14 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 	putStrLn "in run tick"
 	r <- modifyMVar state process
 	putStrLn "leaving run tick"
-	putStrLn $ show $ map fst r
-	return r
+	putStrLn $ show $ snd r
+	return $ fst r
   where
-	process state' = return (newGameState, result)
+	process state' = return (newGameState, (result, logs))
 	  where
 		result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
-		(newGameState, logs) = tick state' timeDelta
 		playerList = getPlayers newGameState
+		(newGameState, logs) = tick state' timeDelta
 		
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = do
