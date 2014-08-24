@@ -18,7 +18,7 @@ module Engine.Types
 	, Game (..)
 	) where
 	
-import Data.Map (Map)
+import Data.Map (Map, assocs)
 import System.Time (TimeDiff)
 import System.Random (StdGen)
 import Data.ByteString (ByteString)
@@ -26,6 +26,8 @@ import Control.Concurrent.MVar (MVar)
 import Control.Applicative ((<*>), (<$>))
 import Control.Monad (mzero)
 import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), encode, parseJSON)
+
+import Debug.Trace
 
 data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
 	{ playerRenderer :: state -> PlayerIndex -> Screen zone entity
@@ -113,7 +115,7 @@ instance (EntityId entity, ZoneId zone) => ToJSON (GamelogMessage entity zone) w
 	toJSON (GLMTwoPlayerAction pid str target) = object ["actor" .= pid, "string" .= str, "target" .= target] -- TODO: shouldn't this be converting the pids to names?
 	
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
-	toJSON = toJSON
+	toJSON screen = toJSON $ assocs screen
 
 instance EntityId entity => ToJSON (ZoneDisplay, [ScreenEntity entity]) where
-	toJSON (zd, ses) = object ["display" .= toJSON zd, "entities" .= toJSON ses]
+	toJSON (zd, ses) = trace "erm" $ object ["display" .= zd, "entities" .= ses]

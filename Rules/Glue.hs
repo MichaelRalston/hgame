@@ -19,7 +19,7 @@ playerRenderer :: GlueState -> ET.PlayerIndex -> ET.Screen Int Int
 playerRenderer _ _ = Map.empty
 
 tick :: GlueState -> TimeDiff -> ET.GameDelta GlueState Int Int
-tick state _ = (state, [ET.GLBroadcast [ET.GLMDisplay "tick tock"]])
+tick state _ = (state, [])
 
 getPlayers :: GlueState -> [ET.PlayerIndex]
 getPlayers _ = [0]
