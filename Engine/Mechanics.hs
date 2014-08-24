@@ -37,14 +37,18 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 	putStrLn "got a message"
 	putStrLn $ unpack m
 	case decode' m of
-		Just eid -> modifyMVar state process
+		Just eid -> do
+			putStrLn "got an eid"
+			modifyMVar state process
 			  where
 				process state' = return (newGameState, result)
 				  where
 					(newGameState, logs) = handleInput state' pid eid
 					playerList = getPlayers newGameState
 					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
-		Nothing -> return [] -- TODO: handle error.
+		Nothing -> do
+			putStrLn "decode failed"
+			return [] -- TODO: handle error.
 processInput _ _ _ = do
 	putStrLn "unknown type, what do"
 	return [] -- TODO: handle error.
