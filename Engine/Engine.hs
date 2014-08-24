@@ -69,7 +69,7 @@ handleConnectionInput gameMap connectionMap connectionId = do
 		)
 
 -- this is the per-game tick loop.	
-tickGame :: GameMap -> ConnectionMap -> GameId -> IO ()
+tickGame :: GameMap -> ConnectionMap -> GameId -> IO () -- TODO: figure out why ticking explodes :(
 tickGame gameMap connectionMap gameId = do
 	time <- getClockTime
 	void $ forkIO $ doTick connectionMap gameMap gameId time

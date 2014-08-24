@@ -15,6 +15,8 @@ import Data.Aeson (object, (.=), encode, decode')
 import Network.WebSockets (DataMessage (..))
 import qualified Network.WebSockets (DataMessage(Text))
 import Data.Maybe (mapMaybe)
+
+import Data.ByteString.Lazy.Char8 (unpack)
 	
 isFinished :: Game -> IO Bool
 isFinished (Game {state, finished}) = do
@@ -33,6 +35,7 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = do
 	putStrLn "got a message"
+	putStrLn $ unpack m
 	case decode' m of
 		Just eid -> modifyMVar state process
 			  where
