@@ -79,6 +79,7 @@ doTick connectionMap gameMap gameId startTime = do
 	threadDelay 1000000 -- microseconds: so one second.
 	putStrLn "Ticking"
 	currentTime' <- join <$> twiddle gameId gameMap (\GameData {game, players} -> do
+			putStrLn "in the ticking twiddler"
 			currentTime <- getClockTime
 			let timeDelta = diffClockTimes currentTime startTime
 			updates <- runTick game timeDelta
