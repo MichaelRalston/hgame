@@ -20,7 +20,7 @@ import Data.ByteString.Lazy.Char8 (unpack)
 
 import Debug.Trace
 traceS a = trace (show a) a
-traceSs str a = trace (str ++ show a) a
+traceSs str a = trace str $ traceS a
 	
 isFinished :: Game -> IO Bool
 isFinished (Game {state, finished}) = do
