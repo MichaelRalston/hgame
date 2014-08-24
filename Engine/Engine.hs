@@ -1,14 +1,14 @@
 {-# Language NamedFieldPuns, OverloadedStrings, TupleSections #-}
 
-{-#
+{-
 	Dependencies:
 	Data.Aeson
 	Network.WebSockets
 	Control.Monad.Loops
-#-}
+-}
 
 module Engine.Engine
-	(	main
+	(	wsApp
 	) where
 
 import Engine.Types
@@ -29,11 +29,6 @@ fixUpdates map' list' = mapMaybe (\(k,v) -> (,v) <$> Map.lookup k map') list'
 
 makeGlueGame :: IO (GameId, PlayerIndex)
 makeGlueGame = undefined
-
-main = do
-	gameMap <- makeModMap
-	connectionMap <- makeModMap
-	WS.runServer "0.0.0.0" 6116 (wsApp gameMap connectionMap)
 
 wsApp :: GameMap -> ConnectionMap -> WS.ServerApp
 wsApp gameMap connectionMap pendingConnection = do
