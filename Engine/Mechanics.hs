@@ -24,7 +24,10 @@ isFinished (Game {state, finished}) = do
 	
 runTick :: Game -> TimeDiff -> IO [(PlayerIndex, DataMessage)]
 runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
-	modifyMVar state process
+	putStrLn "in run tick"
+	r <- modifyMVar state process
+	putStrLn "leaving run tick"
+	return r
   where
 	process state' = return (newGameState, result)
 	  where
