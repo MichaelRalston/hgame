@@ -28,25 +28,18 @@ isFinished (Game {state, finished}) = do
 	
 runTick :: Game -> TimeDiff -> IO [(PlayerIndex, DataMessage)]
 runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
-	putStrLn "in run tick"
-	r <- modifyMVar state process
-	putStrLn "leaving run tick"
-	putStrLn $ show $ snd r
-	return $ fst r
+	modifyMVar state process
   where
-	process state' = return (newGameState, (result, logs))
+	process state' = return (newGameState, result)
 	  where
 		result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
 		playerList = getPlayers newGameState
 		(newGameState, logs) = tick state' timeDelta
 		
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
-processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = do
-	putStrLn "got a message"
-	putStrLn $ unpack m
+processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = 
 	case decode' m of
-		Just eid -> do
-			putStrLn "got an eid"
+		Just eid -> 
 			modifyMVar state process
 			  where
 				process state' = return (newGameState, result)
@@ -54,20 +47,18 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 					(newGameState, logs) = handleInput state' pid eid
 					playerList = getPlayers newGameState
 					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
-		Nothing -> do
-			putStrLn "decode failed"
+		Nothing -> 
 			return [] -- TODO: handle error.
-processInput _ _ _ = do
-	putStrLn "unknown type, what do"
+processInput _ _ _ =
 	return [] -- TODO: handle error.
 
 buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
 	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> DataMessage
-getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ trace "uhh" $ traceSs "encoding" $ encode $ traceSs "object" $ object $ traceSs "objectlistthing" [traceSs "screenTrace" ("screen" (trace ".=" .=) (traceSs "so " screenObject)), traceSs "gamelogTrace" ("gamelogs" .= traceSs "glo " gamelogObject)]
+getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
   where
-	screenObject = (trace "the renderer" renderer) (trace "in SO, state" state) $ trace "in SO, pid" pid
+	screenObject = renderer state pid
 	gamelogObject = toJSON $ filterGamelogs logs pid
 
 filterGamelogs :: [Gamelog a b] -> PlayerIndex -> [GamelogMessage a b]

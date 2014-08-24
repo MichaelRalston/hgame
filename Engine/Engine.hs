@@ -56,13 +56,11 @@ wsApp gameMap connectionMap pendingConnection = do
 	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
-handleConnectionInput gameMap connectionMap connectionId = do
-	_ <- putStrLn "handling input"
+handleConnectionInput gameMap connectionMap connectionId =
 	join <$> twiddle connectionId connectionMap
 		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> do
 			msg <- WS.receiveDataMessage connection
 			twiddle gameId gameMap (\GameData {game, players}-> do
-				putStrLn "in the twiddler"
 				updates <- processInput game msg playerIndex
 				sendUpdates connectionMap $ fixUpdates players updates
 				)
@@ -77,16 +75,11 @@ tickGame gameMap connectionMap gameId = do
 doTick :: ConnectionMap -> GameMap -> GameId -> ClockTime -> IO ()
 doTick connectionMap gameMap gameId startTime = do
 	threadDelay 1000000 -- microseconds: so one second.
-	putStrLn "Ticking"
 	currentTime' <- join <$> twiddle gameId gameMap (\GameData {game, players} -> do
-			putStrLn "in the ticking twiddler"
 			currentTime <- getClockTime
 			let timeDelta = diffClockTimes currentTime startTime
-			putStrLn "about to run tick"
 			updates <- runTick game timeDelta
-			putStrLn "ran tick, got updates"
 			sendUpdates connectionMap $ fixUpdates players updates
-			putStrLn "ran tick, sent updates, wut"
 			finished <- isFinished game
 			case finished of
 				True -> return Nothing
@@ -100,10 +93,6 @@ sendUpdates :: ConnectionMap -> [(ConnectionId, WS.DataMessage)] -> IO ()
 sendUpdates connectionMap updates = void $ sequence $ map (uncurry $ sendMessageToPlayer connectionMap ) updates
 
 sendMessageToPlayer :: ConnectionMap -> ConnectionId -> WS.DataMessage -> IO ()
-sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) -> do
-		putStrLn "we're about to send a message!!"
-		putStrLn $ show msg
-		putStrLn "-----"
+sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) ->
 		WS.sendDataMessage connection msg
-		putStrLn "uh, wat"
 	)
