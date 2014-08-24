@@ -31,7 +31,8 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 		playerList = getPlayers newGameState
 		
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
-processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid =
+processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = do
+	putStrLn "got a message"
 	case decode' m of
 		Just eid -> modifyMVar state process
 			  where
@@ -41,7 +42,9 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 					playerList = getPlayers newGameState
 					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
 		Nothing -> return [] -- TODO: handle error.
-processInput _ _ _ = return [] -- TODO: handle error.
+processInput _ _ _ = do
+	putStrLn "unknown type, what do"
+	return [] -- TODO: handle error.
 
 buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
 	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)

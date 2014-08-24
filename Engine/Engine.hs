@@ -28,11 +28,12 @@ import System.Time (getClockTime, ClockTime, diffClockTimes)
 fixUpdates :: Map.Map PlayerIndex ConnectionId -> [(PlayerIndex, a)] -> [(ConnectionId, a)]
 fixUpdates map' list' = mapMaybe (\(k,v) -> (,v) <$> Map.lookup k map') list'
 
-makeGlueGame :: GameMap -> IO (GameId, PlayerIndex)
-makeGlueGame gameMap = do
+makeGlueGame :: GameMap -> ConnectionMap -> IO (GameId, PlayerIndex)
+makeGlueGame gameMap connectionMap = do
 	game <- Glue.genGlueGame
 	let gameData = GameData { game = game, players = Map.empty }
 	gameId <- insert gameData gameMap
+	tickGame gameMap connectionMap gameId
 	return (gameId,0)
 
 wsApp :: GameMap -> ConnectionMap -> WS.ServerApp
@@ -40,7 +41,7 @@ wsApp gameMap connectionMap pendingConnection = do
 	-- TODO: validate incoming connections?
 	conn <- WS.acceptRequest pendingConnection
 	-- TODO: validate any handshakery.
-	fillerState@(gameId, _) <- makeGlueGame gameMap
+	fillerState@(gameId, _) <- makeGlueGame gameMap connectionMap
 	let name = "The Drama Llama"
 	let connInfo = ConnectionInfo
 			{	displayName = name
@@ -61,6 +62,7 @@ handleConnectionInput gameMap connectionMap connectionId = do
 		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> do
 			msg <- WS.receiveDataMessage connection
 			twiddle gameId gameMap (\GameData {game, players}-> do
+				putStrLn "in the twiddler"
 				updates <- processInput game msg playerIndex
 				sendUpdates connectionMap $ fixUpdates players updates
 				)
