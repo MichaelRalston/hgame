@@ -17,6 +17,9 @@ import qualified Network.WebSockets (DataMessage(Text))
 import Data.Maybe (mapMaybe)
 
 import Data.ByteString.Lazy.Char8 (unpack)
+
+import Debug.Trace
+traceS a = trace (show a) a
 	
 isFinished :: Game -> IO Bool
 isFinished (Game {state, finished}) = do
@@ -61,7 +64,7 @@ buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
 	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> DataMessage
-getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ encode $ object ["screen" .= screenObject, "gamelogs" .= gamelogObject]
+getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ traceS $ encode $ object ["screen" .= screenObject, "gamelogs" .= gamelogObject]
   where
 	screenObject = renderer state pid
 	gamelogObject = toJSON $ filterGamelogs logs pid
