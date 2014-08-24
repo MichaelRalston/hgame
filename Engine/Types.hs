@@ -32,7 +32,8 @@ import Debug.Trace
 data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
 	{ playerRenderer :: state -> PlayerIndex -> Screen zone entity
 --	, newGame :: [PlayerIndex] -> StdGen -> Maybe a -- TODO: reevaluate. Maybe this needs to go?
-	, tick :: state -> TimeDiff -> GameDelta state entity zone
+	, tick :: state -> TimeDiff -> GameDelta state entity zone -- TODO: nuke this.
+-- TODO: replace 'tick' with "player time remaining", fabricate "UITimeout" events.
 	, handleInput :: InputHandler state entity zone
 	, getPlayers :: state -> [PlayerIndex] -- TODO: reevaluate. 
 	, state :: MVar state
