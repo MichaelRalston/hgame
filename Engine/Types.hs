@@ -12,7 +12,7 @@ module Engine.Types
 	, Screen
 	, InputHandler
 	, Gamelog (..)
-	, GamelogMessage
+	, GamelogMessage (..)
 	, toJSON
 	, Game (..)
 	) where
@@ -26,12 +26,12 @@ import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), encode)
 
 data Game = forall a b c. (GameState a, EntityId b, ZoneId c) => Game
 	{ playerRenderer :: a -> PlayerIndex -> Screen c b
-	, newGame :: [PlayerIndex] -> StdGen -> Maybe a -- TODO: reevaluate. Maybe this needs to go?
+--	, newGame :: [PlayerIndex] -> StdGen -> Maybe a -- TODO: reevaluate. Maybe this needs to go?
 	, tick :: a -> TimeDiff -> GameDelta a b c
 	, handleInput :: InputHandler a b c
 	, getPlayers :: a -> [PlayerIndex] -- TODO: reevaluate. 
 	, state :: MVar a
-	, parseEntity :: ByteString -> Maybe b
+--	, parseEntity :: ByteString -> Maybe b
 	, finished :: a -> Bool
 	}
 	

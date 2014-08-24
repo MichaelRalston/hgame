@@ -9,6 +9,7 @@ module Engine.Statebags
 	, insert
 	, delete
 	, twiddle
+	, update
 	, makeModMap
 	) where
 	
@@ -66,6 +67,12 @@ insert elem theMap = do
 	
 delete :: Keyable k => k -> ModMap k a -> IO ()
 delete elem theMap = modifyMVar_ (internalMap theMap) (\map' -> return $ Map.delete (toInt elem) map')
+
+update :: Keyable k => k -> ModMap k a -> (a -> a) -> IO ()
+update elem theMap updater = do
+	map' <- readMVar (internalMap theMap)
+	let adjustment = Map.adjust updater (toInt elem)
+	modifyMVar_ (internalMap theMap) $ return . adjustment
 
 twiddle :: Keyable k => k -> ModMap k a -> (a -> IO r) -> IO (Maybe r)
 twiddle elem theMap twiddler = do

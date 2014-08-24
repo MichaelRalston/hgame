@@ -8,7 +8,7 @@
 -}
 
 module Engine.Engine
-	(	wsApp
+	( wsApp
 	) where
 
 import Engine.Types
@@ -17,6 +17,7 @@ import Engine.Statebags
 
 import qualified Network.WebSockets as WS
 import qualified Data.Map as Map
+import qualified Rules.Glue as Glue
 import Data.Maybe (mapMaybe)
 import Control.Monad (void, join)
 import Control.Monad.Loops (unfoldM_)
@@ -27,15 +28,19 @@ import System.Time (getClockTime, ClockTime, diffClockTimes)
 fixUpdates :: Map.Map PlayerIndex ConnectionId -> [(PlayerIndex, a)] -> [(ConnectionId, a)]
 fixUpdates map' list' = mapMaybe (\(k,v) -> (,v) <$> Map.lookup k map') list'
 
-makeGlueGame :: IO (GameId, PlayerIndex)
-makeGlueGame = undefined
+makeGlueGame :: GameMap -> IO (GameId, PlayerIndex)
+makeGlueGame gameMap = do
+	game <- Glue.genGlueGame
+	let gameData = GameData { game = game, players = Map.empty }
+	gameId <- insert gameData gameMap
+	return (gameId,0)
 
 wsApp :: GameMap -> ConnectionMap -> WS.ServerApp
 wsApp gameMap connectionMap pendingConnection = do
 	-- TODO: validate incoming connections?
 	conn <- WS.acceptRequest pendingConnection
 	-- TODO: validate any handshakery.
-	fillerState <- makeGlueGame
+	fillerState@(gameId, _) <- makeGlueGame gameMap
 	let name = "The Drama Llama"
 	let connInfo = ConnectionInfo
 			{	displayName = name
@@ -43,6 +48,10 @@ wsApp gameMap connectionMap pendingConnection = do
 			,	gameData = fillerState
 			}
 	connId <- insert connInfo connectionMap
+	update gameId gameMap (\gd -> gd {players = Map.fromList [(0,connId)]})
+	-- TODO: address the problem of creating a game with a player.
+	-- ... although it might only be an issue here? And then later we already HAVE a connection
+	-- and have to update it. And the game ... will need an interface and whatever. SORT OUT.
 	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())

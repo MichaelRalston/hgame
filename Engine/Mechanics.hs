@@ -31,7 +31,7 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 		playerList = getPlayers newGameState
 		
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
-processInput (Game {parseEntity, state, handleInput, getPlayers, playerRenderer}) (Text m) pid =
+processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid =
 	case decode' m of
 		Just eid -> modifyMVar state process
 			  where
