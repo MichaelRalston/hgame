@@ -33,7 +33,6 @@ makeGlueGame gameMap connectionMap = do
 	game <- Glue.genGlueGame
 	let gameData = GameData { game = game, players = Map.empty }
 	gameId <- insert gameData gameMap
-	tickGame gameMap connectionMap gameId
 	return (gameId,0)
 
 wsApp :: GameMap -> ConnectionMap -> WS.ServerApp
