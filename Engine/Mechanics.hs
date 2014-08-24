@@ -27,6 +27,7 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 	putStrLn "in run tick"
 	r <- modifyMVar state process
 	putStrLn "leaving run tick"
+	putStrLn $ show $ map fst r
 	return r
   where
 	process state' = return (newGameState, result)
