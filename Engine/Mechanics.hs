@@ -64,7 +64,7 @@ buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
 	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> DataMessage
-getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ trace "uhh" $ traceS $ encode $ object ["screen" .= screenObject, "gamelogs" .= gamelogObject]
+getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ trace "uhh" $ traceS $ encode $ traceS $ object $ traceS ["screen" .= screenObject, "gamelogs" .= gamelogObject]
   where
 	screenObject = renderer state pid
 	gamelogObject = toJSON $ filterGamelogs logs pid
