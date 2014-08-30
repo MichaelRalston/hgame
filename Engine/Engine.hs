@@ -14,10 +14,12 @@ module Engine.Engine
 import Engine.Types
 import Engine.Mechanics
 import Engine.Statebags
+import Rules.Lobby (LobbyState)
 
+import Control.Concurrent.MVar (MVar)
 import qualified Network.WebSockets as WS
 import qualified Data.Map as Map
-import qualified Rules.Glue as Glue
+import qualified Rules.Lobby as Lobby
 import Data.Maybe (mapMaybe)
 import Control.Monad (void, join)
 import Control.Monad.Loops (unfoldM_)
@@ -28,30 +30,15 @@ import System.Time (getClockTime, ClockTime, diffClockTimes)
 fixUpdates :: Map.Map PlayerIndex ConnectionId -> [(PlayerIndex, a)] -> [(ConnectionId, a)]
 fixUpdates map' list' = mapMaybe (\(k,v) -> (,v) <$> Map.lookup k map') list'
 
-makeGlueGame :: GameMap -> ConnectionMap -> IO (GameId, PlayerIndex)
-makeGlueGame gameMap connectionMap = do
-	game <- Glue.genGlueGame
-	let gameData = GameData { game = game, players = Map.empty }
-	gameId <- insert gameData gameMap
-	return (gameId,0)
-
-wsApp :: GameMap -> ConnectionMap -> WS.ServerApp
-wsApp gameMap connectionMap pendingConnection = do
+wsApp :: GameMap -> ConnectionMap -> GameId -> MVar LobbyState -> WS.ServerApp
+wsApp gameMap connectionMap lobbyId lobbyState pendingConnection = do
 	-- TODO: validate incoming connections?
 	conn <- WS.acceptRequest pendingConnection
 	-- TODO: validate any handshakery.
-	fillerState@(gameId, _) <- makeGlueGame gameMap connectionMap
-	let name = "The Drama Llama"
-	let connInfo = ConnectionInfo
-			{	displayName = name
-			,	connection = conn
-			,	gameData = fillerState
-			}
-	connId <- insert connInfo connectionMap
-	update gameId gameMap (\gd -> gd {players = Map.fromList [(0,connId)]})
+	connId <- Lobby.addPlayer connectionMap conn lobbyId lobbyState gameMap
 	-- TODO: address the problem of creating a game with a player.
 	-- ... although it might only be an issue here? And then later we already HAVE a connection
-	-- and have to update it. And the game ... will need an interface and whatever. SORT OUT.
+	-- and have to update it. And the game ... will need an interface and whatever. SORT OUT.	
 	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
