@@ -51,9 +51,9 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 					playerList = getPlayers newGameState
 					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
 		Nothing -> 
-			return [] -- TODO: handle error.
+			trace "processInput got invalid json" $ return [] -- TODO: handle error.
 processInput _ _ _ =
-	return [] -- TODO: handle error.
+	trace "processInput got invalid input" $ return [] -- TODO: handle error.
 
 buildResult :: [PlayerIndex] -> ((state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage) -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> IO [(PlayerIndex, DataMessage)]
 buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
