@@ -17,6 +17,7 @@ function handleTextKey($elem, e, entityId) {
 }
 
 function makeEntityElement(entityJson) {
+	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
 			var $elem = $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
@@ -81,14 +82,15 @@ $(document).ready(function () {
 	var ws = createWebSocket('/');
 	ws.onmessage = function(event) {
 		console.log("got update", event);
-		handleUpdate(event.data);
+		handleUpdate(JSON.parse(event.data));
 	}
 	sendMsg = function(text) {
 		console.log("transmitting ", text);
-		ws.send(JSON.encode(text));
+		ws.send(JSON.stringify(text));
 	}
 	// Below this is hackery.
-	var $input = entityElement({'entityId':'textInput','display':{'type':'text'}});
+	var $input = entityElement({'entityId':0,'display':{'type':'textInput'}});
 	$('#gamelog').after($input);
 });
+
 

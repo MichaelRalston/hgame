@@ -51,7 +51,7 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 					playerList = getPlayers newGameState
 					result = buildResult playerList playerRenderer newGameState logs
 		Nothing -> 
-			trace "processInput got invalid json" $ return [] -- TODO: handle error.
+			trace "processInput got invalid json" $ trace (show m) $ return [] -- TODO: handle error.
 processInput _ _ _ =
 	trace "processInput got invalid input" $ return [] -- TODO: handle error.
 
@@ -60,7 +60,7 @@ buildResult playerList playerRenderer newGameState logs =
 	sequence $ zipWith (\a b -> (a,) <$> b) playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getNameForPid :: {- whatever parameters are required -} PlayerIndex -> IO String -- TO CONSIDER: kill this, put it in a transform on the /screen/, and let the frontend do the translation.
-getNameForPid = undefined
+getNameForPid pid = return $ "Player " ++ (show $ pid+1)
 	
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage
 getPlayerUpdate renderer state logs pid = do
