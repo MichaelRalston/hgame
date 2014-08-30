@@ -1,4 +1,4 @@
-{-# Language NamedFieldPuns, OverloadedStrings #-}
+{-# Language NamedFieldPuns, OverloadedStrings, TupleSections #-}
 
 module Engine.Mechanics
 	( processInput
@@ -12,9 +12,10 @@ import qualified Data.ByteString (concat)
 import Control.Concurrent.MVar (modifyMVar, withMVar)
 import Data.ByteString.Lazy (toChunks)
 import Data.ByteString.Builder (toLazyByteString)
-import Data.Aeson (object, (.=), encode, decode')
+import Data.Aeson (object, (.=), encode, decode', Value)
 import Data.Aeson.Encode (encodeToByteStringBuilder)
 import Network.WebSockets (DataMessage (..))
+import Control.Applicative ((<$>))
 import qualified Network.WebSockets (DataMessage(Text))
 import Data.Maybe (mapMaybe)
 
@@ -32,7 +33,7 @@ runTick :: Game -> TimeDiff -> IO [(PlayerIndex, DataMessage)]
 runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 	modifyMVar state process
   where
-	process state' = return (newGameState, result)
+	process state' = (newGameState,) <$> result
 	  where
 		result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
 		playerList = getPlayers newGameState
@@ -44,7 +45,7 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 		Just eid -> 
 			modifyMVar state process
 			  where
-				process state' = return (newGameState, result)
+				process state' = (newGameState,) <$> result
 				  where
 					(newGameState, logs) = handleInput state' pid eid
 					playerList = getPlayers newGameState
@@ -54,14 +55,30 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 processInput _ _ _ =
 	return [] -- TODO: handle error.
 
+buildResult :: [PlayerIndex] -> ((state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage) -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> IO [(PlayerIndex, DataMessage)]
 buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
-	zip playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
+	sequence $ zipWith (\a b -> (a,) <$> b) playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
-getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> DataMessage
-getPlayerUpdate renderer state logs pid = Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
-  where
-	screenObject = renderer state pid
-	gamelogObject = toJSON $ filterGamelogs logs pid
+getNameForPid :: PlayerIndex -> IO String
+getNameForPid = undefined
+	
+getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage
+getPlayerUpdate renderer state logs pid = do
+	let screenObject = renderer state pid
+	let gamelogs = filterGamelogs logs pid
+	gamelogObject <- sequence $ map (gameLogToJson getNameForPid) gamelogs
+	return $ Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
+	
+gameLogToJson :: (EntityId entity, ZoneId zone) => (PlayerIndex -> IO String) -> GamelogMessage entity zone -> IO Value
+gameLogToJson _ (GLMDisplay str) = return $ object ["display" .= toJSON str]
+gameLogToJson _ (GLMMove entities zone) = return $ object ["move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
+gameLogToJson nameFinder (GLMPlayerAction pid str) = do
+	name <- nameFinder pid
+	return $ object ["actor" .= name, "string" .= str]
+gameLogToJson nameFinder (GLMTwoPlayerAction pid str target) = do
+	name <- nameFinder pid
+	return $ object ["actor" .= name, "string" .= str, "target" .= target]
+		
 
 filterGamelogs :: [Gamelog a b] -> PlayerIndex -> [GamelogMessage a b]
 filterGamelogs logs pid = concat $ mapMaybe theFilter logs

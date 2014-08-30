@@ -109,12 +109,6 @@ instance ToJSON ZoneDisplay where
 instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eActive} = object ["entityId" .= toJSON eId, "display" .= toJSON eDisplay, "active" .= toJSON eActive]
 
-instance (EntityId entity, ZoneId zone) => ToJSON (GamelogMessage entity zone) where
-	toJSON (GLMDisplay str) = object ["display" .= toJSON str]
-	toJSON (GLMMove entities zone) = object ["move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
-	toJSON (GLMPlayerAction pid str) = object ["actor" .= pid, "string" .= str] -- TODO: shouldn't this be converting the pid to a name?
-	toJSON (GLMTwoPlayerAction pid str target) = object ["actor" .= pid, "string" .= str, "target" .= target] -- TODO: shouldn't this be converting the pids to names?
-	
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ assocs screen
 
