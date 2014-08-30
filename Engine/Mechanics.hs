@@ -12,7 +12,7 @@ import qualified Data.ByteString (concat)
 import Control.Concurrent.MVar (modifyMVar, withMVar)
 import Data.ByteString.Lazy (toChunks)
 import Data.ByteString.Builder (toLazyByteString)
-import Data.Aeson (object, (.=), encode, decode', Value)
+import Data.Aeson (object, (.=), encode, decode', Value(..))
 import Data.Aeson.Encode (encodeToByteStringBuilder)
 import Network.WebSockets (DataMessage (..))
 import Control.Applicative ((<$>))
@@ -70,14 +70,14 @@ getPlayerUpdate renderer state logs pid = do
 	return $ Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
 	
 gameLogToJson :: (EntityId entity, ZoneId zone) => (PlayerIndex -> IO String) -> GamelogMessage entity zone -> IO Value
-gameLogToJson _ (GLMDisplay str) = return $ object ["display" .= toJSON str]
-gameLogToJson _ (GLMMove entities zone) = return $ object ["move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
+gameLogToJson _ (GLMDisplay str) = return $ object ["type" .= String "display", "display" .= toJSON str]
+gameLogToJson _ (GLMMove entities zone) = return $ object ["type" .= String "move", "move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
 gameLogToJson nameFinder (GLMPlayerAction pid str) = do
 	name <- nameFinder pid
-	return $ object ["actor" .= name, "string" .= str]
+	return $ object ["type" .= String "action", "actor" .= name, "string" .= str]
 gameLogToJson nameFinder (GLMTwoPlayerAction pid str target) = do
 	name <- nameFinder pid
-	return $ object ["actor" .= name, "string" .= str, "target" .= target]
+	return $ object ["type" .= String "targetAction", "actor" .= name, "string" .= str, "target" .= target]
 		
 filterGamelogs :: [Gamelog a b] -> PlayerIndex -> [GamelogMessage a b]
 filterGamelogs logs pid = concat $ mapMaybe theFilter logs

@@ -71,7 +71,7 @@ data UserInput entity zone
 
 data GamelogMessage entity zone
 	= GLMDisplay String
-	| GLMMove [entity] zone
+	| GLMMove [entity] zone -- TODO: maybe include a way to say a 'source zone', for facedown->faceups?
     | GLMPlayerAction PlayerIndex String
     | GLMTwoPlayerAction PlayerIndex String PlayerIndex -- "first did something to second".
 	deriving Show
@@ -102,7 +102,8 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 	parseJSON _ = mzero
 	
 instance ToJSON ScreenDisplay where
-	toJSON (SDImage u) = object ["uri" .= toJSON u]
+	toJSON (SDImage u) = object ["type" .= String "image", "uri" .= toJSON u]
+	toJSON (SDText t) = object ["type" .= String "text", "text" .= toJSON t]
 
 instance ToJSON ZoneDisplay where
 	toJSON ZDGuess = String "guess"
@@ -114,4 +115,4 @@ instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ assocs screen
 
 instance EntityId entity => ToJSON (ZoneDisplay, [ScreenEntity entity]) where
-	toJSON (zd, ses) = trace "erm" $ object ["display" .= zd, "entities" .= ses]
+	toJSON (zd, ses) = object ["display" .= zd, "entities" .= ses]
