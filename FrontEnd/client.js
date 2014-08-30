@@ -1,3 +1,5 @@
+var sendMsg;
+
 function createWebSocket(path) {
     var host = window.location.hostname;
     if(host == '') host = 'localhost';
@@ -7,12 +9,27 @@ function createWebSocket(path) {
     return new Socket(uri);
 }
 
+function handleTextKey($elem, e, entityId) {
+	if (e.keyCode == 13) {
+		sendMsg({'action':'text','entity':entityId,'text':$elem.val()});
+		$elem.val('');
+	}
+}
+
 function makeEntityElement(entityJson) {
 	switch (entityJson.display.type) {
 		case 'image':
-			return $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
+			var $elem = $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
+			return $elem;
 		case 'text':
-			return $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
+			var $elem = $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
+			return $elem;
+		case 'textInput':
+			var $elem = $('<input type="text" id="entity-"'+entityJson.entityId+'" />');
+			$elem.keyup(function(e) {
+				handleTextKey($elem, e, entityJson.entityId);
+			});
+			return $elem;
 		default:
 			return $('#id_that_does_not_exist_ever');
 	}
@@ -47,7 +64,8 @@ function showGamelog(gamelog) {
 			}
 			gamelog.move.entities.forEach(move);
 			break;
-		case 'action': // TODO: Implement.
+		case 'action':
+			$('<p></p>').text('<'+gamelog.actor+'> '+gamelog.string).appendTo($('#gamelog'));
 			break;
 		case 'targetAction': // TODO: Implement.
 			break;
@@ -65,11 +83,12 @@ $(document).ready(function () {
 		console.log("got update", event);
 		handleUpdate(event.data);
 	}
-	$('#input').submit(function() {
-		var text = $('#text').val();
-		ws.send(text);
-		$('#text').val('');
-		return false;
-	});
+	sendMsg = function(text) {
+		console.log("transmitting ", text);
+		ws.send(JSON.encode(text));
+	}
+	// Below this is hackery.
+	var $input = entityElement({'entityId':'textInput','display':{'type':'text'}});
+	$('#gamelog').after($input);
 });
 

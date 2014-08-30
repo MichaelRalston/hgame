@@ -67,6 +67,7 @@ data Gamelog entity zone
 data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone	
+	| UIText entity String
 	deriving Show
 
 data GamelogMessage entity zone
@@ -98,6 +99,7 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 		case (action :: String) of
 			"click" -> UIClick <$> v .: "entity"
 			"drag" -> UIDrag <$> v .: "entity" <*> v .: "zone"
+			"text" -> UIText <$> v .: "entity" <*> v .: "text"
 			otherwise -> fail "unknown action"
 	parseJSON _ = mzero
 	

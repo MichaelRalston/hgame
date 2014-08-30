@@ -21,6 +21,7 @@ import Data.List ((\\))
 handleInput :: ET.InputHandler LobbyState Int Int
 handleInput state pid (ET.UIClick input) = (state, [ET.GLBroadcast [ET.GLMMove [input] pid, ET.GLMPlayerAction pid "clicked"]])
 handleInput state pid (ET.UIDrag entity zone) = (state, [ET.GLBroadcast [ET.GLMMove [entity] zone, ET.GLMPlayerAction pid "dragged"]])
+handleInput state pid (ET.UIText entity str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str]])
 
 finished :: LobbyState -> Bool
 finished _ = False
