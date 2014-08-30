@@ -59,7 +59,7 @@ buildResult :: (EntityId entity, ZoneId zone, GameState state) => [PlayerIndex] 
 buildResult playerList playerRenderer newGameState logs =
 	sequence $ zipWith (\a b -> (a,) <$> b) playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
-getNameForPid :: PlayerIndex -> IO String
+getNameForPid :: {- whatever parameters are required -} PlayerIndex -> IO String -- TO CONSIDER: kill this, put it in a transform on the /screen/, and let the frontend do the translation.
 getNameForPid = undefined
 	
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage
@@ -79,7 +79,6 @@ gameLogToJson nameFinder (GLMTwoPlayerAction pid str target) = do
 	name <- nameFinder pid
 	return $ object ["actor" .= name, "string" .= str, "target" .= target]
 		
-
 filterGamelogs :: [Gamelog a b] -> PlayerIndex -> [GamelogMessage a b]
 filterGamelogs logs pid = concat $ mapMaybe theFilter logs
   where
