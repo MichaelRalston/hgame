@@ -84,11 +84,13 @@ data ZoneDisplay zone entity
 	| ZDHorizFill Int -- 100% wide, X% tall
 	| ZDNested (ZoneDisplay zone entity) zone
 	| ZDShelf entity -- Hidden by default, but the entity whose ID is entity shows it.
+	| ZDDialog -- dialog!
 	deriving Show
 
 data ScreenEntity entity = SE
 	{ eId :: entity
 	, eDisplay :: ScreenDisplay
+	-- TODO: Visual modifiers?
 	, eActive :: Bool
 	}
 	deriving Show
@@ -112,6 +114,7 @@ instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) wher
 	toJSON (ZDHorizFill i) = object ["type" .= String "horizFill", "height" .= i]
 	toJSON (ZDNested nested zoneId) = object ["type" .= String "nested", "display" .= nested, "zone" .= zoneId]
 	toJSON (ZDShelf entityId) = object ["type" .= String "shelf", "entity" .= entityId]
+	toJSON ZDDialog = object ["type" .= String "dialog"]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eActive} = object ["entityId" .= toJSON eId, "display" .= toJSON eDisplay, "active" .= toJSON eActive]
