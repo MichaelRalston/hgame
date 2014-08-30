@@ -35,7 +35,7 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
   where
 	process state' = (newGameState,) <$> result
 	  where
-		result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
+		result = buildResult playerList playerRenderer newGameState logs
 		playerList = getPlayers newGameState
 		(newGameState, logs) = tick state' timeDelta
 		
@@ -49,14 +49,14 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 				  where
 					(newGameState, logs) = handleInput state' (traceS pid) (traceS eid)
 					playerList = getPlayers newGameState
-					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
+					result = buildResult playerList playerRenderer newGameState logs
 		Nothing -> 
 			trace "processInput got invalid json" $ return [] -- TODO: handle error.
 processInput _ _ _ =
 	trace "processInput got invalid input" $ return [] -- TODO: handle error.
 
-buildResult :: [PlayerIndex] -> ((state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage) -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> IO [(PlayerIndex, DataMessage)]
-buildResult playerList getPlayerUpdate playerRenderer newGameState logs =
+buildResult :: (EntityId entity, ZoneId zone, GameState state) => [PlayerIndex] -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> IO [(PlayerIndex, DataMessage)]
+buildResult playerList playerRenderer newGameState logs =
 	sequence $ zipWith (\a b -> (a,) <$> b) playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
 getNameForPid :: PlayerIndex -> IO String
