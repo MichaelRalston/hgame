@@ -9,25 +9,30 @@ module Rules.Lobby
 import qualified Engine.Types as ET
 import Control.Concurrent.MVar (newMVar, MVar)
 import System.Time (TimeDiff)
-import Data.ByteString (ByteString)
 import qualified Data.Map as Map
 import qualified Network.WebSockets as WS
 import Engine.Statebags
 import Control.Concurrent.MVar (modifyMVar)
-import Control.Applicative ((<$>))
 import Data.List ((\\))
 
+gamelogZone :: Int -- zone ID.
+gamelogZone = 0
+inputZone :: Int -- also zone ID.
+inputZone = 1
 
 handleInput :: ET.InputHandler LobbyState Int Int
-handleInput state pid (ET.UIClick input) = (state, [ET.GLBroadcast [ET.GLMMove [input] pid, ET.GLMPlayerAction pid "clicked"]])
-handleInput state pid (ET.UIDrag entity zone) = (state, [ET.GLBroadcast [ET.GLMMove [entity] zone, ET.GLMPlayerAction pid "dragged"]])
-handleInput state pid (ET.UIText entity str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str]])
+handleInput state pid (ET.UIClick input) = (state, [ET.GLBroadcast [ET.GLMMove [input] pid, ET.GLMPlayerAction pid "clicked" gamelogZone]])
+handleInput state pid (ET.UIDrag entity zone) = (state, [ET.GLBroadcast [ET.GLMMove [entity] zone, ET.GLMPlayerAction pid "dragged" gamelogZone]])
+handleInput state pid (ET.UIText entity str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
 
 finished :: LobbyState -> Bool
 finished _ = False
 
 playerRenderer :: LobbyState -> ET.PlayerIndex -> ET.Screen Int Int
-playerRenderer _ _ = Map.empty
+playerRenderer _ _ = Map.fromList 
+	[ (gamelogZone, (ET.ZDHorizFill 95,[]))
+	, (inputZone, (ET.ZDHorizFill 5,[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) True]))
+	]
 
 tick :: LobbyState -> TimeDiff -> ET.GameDelta LobbyState Int Int
 tick state _ = (state, [])
@@ -36,7 +41,7 @@ getPlayers :: LobbyState -> [ET.PlayerIndex]
 getPlayers LobbyState {activeParticipants} = activeParticipants
 
 addPlayer :: ConnectionMap -> WS.Connection -> GameId -> MVar LobbyState -> GameMap -> IO ConnectionId
-addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState $ (\state@LobbyState {activeParticipants} -> do
+addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState $ (\LobbyState {activeParticipants} -> do
 		let name = "The Drama Llama"
 		let newId = head $ [0..] \\ activeParticipants
 		let connInfo = ConnectionInfo

@@ -5,10 +5,11 @@ module Engine.Types
 	, PlayerIndex
 	, GameDelta
 	, EntityId
-	, ScreenDisplay
-	, ZoneDisplay
+	, ScreenDisplay (..)
+	, ZoneDisplay (..)
 	, GameState
-	, ScreenEntity
+	, ScreenEntity (..)
+	, ScreenEntitySize (..)
 	, Screen
 	, InputHandler
 	, Gamelog (..)
@@ -68,15 +69,16 @@ data UserInput entity zone
 	deriving Show
 
 data GamelogMessage entity zone
-	= GLMDisplay String
+	= GLMDisplay String zone
 	| GLMMove [entity] zone -- TODO: maybe include a way to say a 'source zone', for facedown->faceups?
-    | GLMPlayerAction PlayerIndex String
-    | GLMTwoPlayerAction PlayerIndex String PlayerIndex -- "first did something to second".
+    | GLMPlayerAction PlayerIndex String zone
+    | GLMTwoPlayerAction PlayerIndex String PlayerIndex zone -- "first did something to second".
 	deriving Show
 
 data ScreenDisplay
 	= SDImage String
 	| SDText String	
+	| SDTextInput
 	deriving Show
 
 data ZoneDisplay zone entity
@@ -87,9 +89,14 @@ data ZoneDisplay zone entity
 	| ZDDialog -- dialog!
 	deriving Show
 
+data ScreenEntitySize
+	= SESPercent Int Int -- height% width%
+	deriving Show
+	
 data ScreenEntity entity = SE
 	{ eId :: entity
 	, eDisplay :: ScreenDisplay
+	, eSize :: ScreenEntitySize
 	-- TODO: Visual modifiers?
 	, eActive :: Bool
 	}
@@ -108,6 +115,7 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 instance ToJSON ScreenDisplay where
 	toJSON (SDImage u) = object ["type" .= String "image", "uri" .= toJSON u]
 	toJSON (SDText t) = object ["type" .= String "text", "text" .= toJSON t]
+	toJSON (SDTextInput) = object ["type" .= String "textInput"]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) where
 	toJSON (ZDRight i) = object ["type" .= String "floatRight", "width" .= i]
@@ -115,9 +123,12 @@ instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) wher
 	toJSON (ZDNested nested zoneId) = object ["type" .= String "nested", "display" .= nested, "zone" .= zoneId]
 	toJSON (ZDShelf entityId) = object ["type" .= String "shelf", "entity" .= entityId]
 	toJSON ZDDialog = object ["type" .= String "dialog"]
+
+instance ToJSON (ScreenEntitySize) where
+	toJSON (SESPercent h w) = object ["type" .= String "percent", "height" .= h, "width" .= w]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
-	toJSON SE {eId, eDisplay, eActive} = object ["entityId" .= toJSON eId, "display" .= toJSON eDisplay, "active" .= toJSON eActive]
+	toJSON SE {eId, eDisplay, eSize, eActive} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ assocs screen

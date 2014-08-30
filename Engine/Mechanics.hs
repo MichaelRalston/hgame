@@ -63,14 +63,14 @@ getPlayerUpdate renderer state logs pid = do
 	return $ Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
 	
 gameLogToJson :: (EntityId entity, ZoneId zone) => (PlayerIndex -> IO String) -> GamelogMessage entity zone -> IO Value
-gameLogToJson _ (GLMDisplay str) = return $ object ["type" .= String "display", "display" .= toJSON str]
+gameLogToJson _ (GLMDisplay str zone) = return $ object ["type" .= String "display", "display" .= toJSON str, "zone" .= zone]
 gameLogToJson _ (GLMMove entities zone) = return $ object ["type" .= String "move", "move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
-gameLogToJson nameFinder (GLMPlayerAction pid str) = do
+gameLogToJson nameFinder (GLMPlayerAction pid str zone) = do
 	name <- nameFinder pid
-	return $ object ["type" .= String "action", "actor" .= name, "string" .= str]
-gameLogToJson nameFinder (GLMTwoPlayerAction pid str target) = do
+	return $ object ["type" .= String "action", "actor" .= name, "string" .= str, "zone" .= zone]
+gameLogToJson nameFinder (GLMTwoPlayerAction pid str target zone) = do
 	name <- nameFinder pid
-	return $ object ["type" .= String "targetAction", "actor" .= name, "string" .= str, "target" .= target]
+	return $ object ["type" .= String "targetAction", "actor" .= name, "string" .= str, "target" .= target, "zone" .= zone]
 		
 filterGamelogs :: [Gamelog a b] -> PlayerIndex -> [GamelogMessage a b]
 filterGamelogs logs pid = concat $ mapMaybe theFilter logs
