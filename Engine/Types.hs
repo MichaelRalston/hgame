@@ -66,8 +66,9 @@ data Gamelog entity zone
 
 data UserInput entity zone
 	= UIClick entity
-	| UIDrag entity zone
-	
+	| UIDrag entity zone	
+	deriving Show
+
 data GamelogMessage entity zone
 	= GLMDisplay String
 	| GLMMove [entity] zone
