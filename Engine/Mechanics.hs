@@ -47,7 +47,7 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 			  where
 				process state' = (newGameState,) <$> result
 				  where
-					(newGameState, logs) = handleInput state' pid eid
+					(newGameState, logs) = handleInput state' (traceS pid) (traceS eid)
 					playerList = getPlayers newGameState
 					result = buildResult playerList getPlayerUpdate playerRenderer newGameState logs
 		Nothing -> 
