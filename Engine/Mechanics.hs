@@ -8,18 +8,11 @@ module Engine.Mechanics
 	
 import Engine.Types
 import System.Time (TimeDiff)
-import qualified Data.ByteString (concat)
 import Control.Concurrent.MVar (modifyMVar, withMVar)
-import Data.ByteString.Lazy (toChunks)
-import Data.ByteString.Builder (toLazyByteString)
 import Data.Aeson (object, (.=), encode, decode', Value(..))
-import Data.Aeson.Encode (encodeToByteStringBuilder)
 import Network.WebSockets (DataMessage (..))
 import Control.Applicative ((<$>))
-import qualified Network.WebSockets (DataMessage(Text))
 import Data.Maybe (mapMaybe)
-
-import Data.ByteString.Lazy.Char8 (unpack)
 
 import Debug.Trace
 traceS a = trace (show a) a

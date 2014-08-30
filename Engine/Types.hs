@@ -20,14 +20,11 @@ module Engine.Types
 	
 import Data.Map (Map, assocs)
 import System.Time (TimeDiff)
-import System.Random (StdGen)
-import Data.ByteString (ByteString)
+--import System.Random (StdGen)
 import Control.Concurrent.MVar (MVar)
 import Control.Applicative ((<*>), (<$>))
 import Control.Monad (mzero)
-import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), encode, parseJSON)
-
-import Debug.Trace
+import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), parseJSON)
 
 data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
 	{ playerRenderer :: state -> PlayerIndex -> Screen zone entity
@@ -42,7 +39,7 @@ data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId 
 	}
 	
 type GameDelta state entity zone = (state, [Gamelog entity zone])
-type Screen zone entity = Map (zone) (ZoneDisplay, [ScreenEntity entity])
+type Screen zone entity = Map (zone) (ZoneDisplay zone entity, [ScreenEntity entity])
 type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> GameDelta state entity zone
 
 class (Eq entity, FromJSON entity, ToJSON entity, Show entity) => EntityId entity
@@ -82,8 +79,11 @@ data ScreenDisplay
 	| SDText String	
 	deriving Show
 
-data ZoneDisplay
-	= ZDGuess -- "guess where it goes"; to be extended with something actually useful.
+data ZoneDisplay zone entity
+	= ZDRight Int -- Float on the right, X% wide.
+	| ZDHorizFill Int -- 100% wide, X% tall
+	| ZDNested (ZoneDisplay zone entity) zone
+	| ZDShelf entity -- Hidden by default, but the entity whose ID is entity shows it.
 	deriving Show
 
 data ScreenEntity entity = SE
@@ -100,15 +100,18 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 			"click" -> UIClick <$> v .: "entity"
 			"drag" -> UIDrag <$> v .: "entity" <*> v .: "zone"
 			"text" -> UIText <$> v .: "entity" <*> v .: "text"
-			otherwise -> fail "unknown action"
+			_ -> fail "unknown action"
 	parseJSON _ = mzero
 	
 instance ToJSON ScreenDisplay where
 	toJSON (SDImage u) = object ["type" .= String "image", "uri" .= toJSON u]
 	toJSON (SDText t) = object ["type" .= String "text", "text" .= toJSON t]
 
-instance ToJSON ZoneDisplay where
-	toJSON ZDGuess = String "guess"
+instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) where
+	toJSON (ZDRight i) = object ["type" .= String "floatRight", "width" .= i]
+	toJSON (ZDHorizFill i) = object ["type" .= String "horizFill", "height" .= i]
+	toJSON (ZDNested nested zoneId) = object ["type" .= String "nested", "display" .= nested, "zone" .= zoneId]
+	toJSON (ZDShelf entityId) = object ["type" .= String "shelf", "entity" .= entityId]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eActive} = object ["entityId" .= toJSON eId, "display" .= toJSON eDisplay, "active" .= toJSON eActive]
@@ -116,5 +119,5 @@ instance EntityId entity => ToJSON (ScreenEntity entity) where
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ assocs screen
 
-instance EntityId entity => ToJSON (ZoneDisplay, [ScreenEntity entity]) where
+instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity, [ScreenEntity entity]) where
 	toJSON (zd, ses) = object ["display" .= zd, "entities" .= ses]
