@@ -12,7 +12,10 @@ import Text.Read (readMaybe)
 import Control.Monad (mzero)
 
 data CardTableState = CTS
-	{
+	{ hands :: [CardEntity]
+	, decks :: [CardEntity]
+	, table :: [CardEntity]
+	, discard :: [CardEntity]
 	}
 	
 data CardZone
