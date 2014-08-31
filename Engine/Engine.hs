@@ -47,7 +47,7 @@ wsApp gameMap connectionMap lobbyId lobbyState pendingConnection = do
 				sendUpdates connectionMap $ fixUpdates players updates
 				)
 		)
-	delete connId connectionMap
+	useMemory $ delete connId connectionMap
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
 handleConnectionInput gameMap connectionMap connectionId =
@@ -81,7 +81,7 @@ doTick connectionMap gameMap gameId startTime = do
 		)
 	case currentTime' of
 		Just currentTime -> doTick connectionMap gameMap gameId currentTime
-		Nothing -> delete gameId gameMap
+		Nothing -> useMemory $ delete gameId gameMap
 	
 sendUpdates :: ConnectionMap -> [(ConnectionId, WS.DataMessage)] -> IO ()
 sendUpdates connectionMap updates = void $ sequence $ map (uncurry $ sendMessageToPlayer connectionMap ) updates

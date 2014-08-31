@@ -13,6 +13,7 @@ import Control.Concurrent.MVar (newMVar, MVar)
 import System.Time (TimeDiff)
 import qualified Data.Map as Map
 import qualified Network.WebSockets as WS
+import System.Random (newStdGen, StdGen)
 import Engine.Statebags
 import Control.Concurrent.MVar (modifyMVar)
 import Data.List ((\\))
@@ -56,16 +57,17 @@ addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState 
 				,	connection = conn
 				,	gameData = (lobbyId, newId)
 				}
-		connectionId <- insert connInfo connectionMap
+		connectionId <- ET.useMemory $ insert connInfo connectionMap
 		initialMessage <- EM.getPlayerState playerRenderer state newId
 		WS.sendDataMessage conn initialMessage
-		update lobbyId gameMap (\game@GameData {players} -> game {players = Map.insert newId connectionId players})
+		ET.useMemory $ update lobbyId gameMap (\game@GameData {players} -> game {players = Map.insert newId connectionId players})
 		return (state {activeParticipants=newId:activeParticipants}, connectionId)
 	)
 
 data LobbyState = LobbyState
 	{ activeParticipants :: [ET.PlayerIndex]
 	, pendingGame :: Maybe ES.GameId
+	, generator :: StdGen
 	}
 	
 instance ET.GameState LobbyState
@@ -75,7 +77,8 @@ instance ET.ZoneId Int
 
 makeLobby :: GameMap -> IO (GameId, MVar LobbyState)
 makeLobby gameMap = do
-	state <- newMVar $ LobbyState [] Nothing
+	gen <- newStdGen
+	state <- newMVar $ LobbyState [] Nothing gen
 	let game = ET.Game
 		{ ET.playerRenderer = playerRenderer
 		, ET.tick = tick
@@ -84,5 +87,5 @@ makeLobby gameMap = do
 		, ET.state = state
 		, ET.finished = finished
 		}
-	gameId <- insert GameData {game=game, players=Map.empty} gameMap
+	gameId <- ET.useMemory $ insert GameData {game=game, players=Map.empty} gameMap
 	return (gameId, state)

@@ -17,6 +17,9 @@ module Engine.Types
 	, UserInput (..)
 	, toJSON
 	, Game (..)
+	, WithMemory
+	, alloc
+	, useMemory
 	) where
 	
 import Data.Map (Map, assocs)
@@ -25,16 +28,18 @@ import System.Time (TimeDiff)
 import Control.Concurrent.MVar (MVar)
 import Control.Applicative ((<*>), (<$>))
 import Control.Monad (mzero)
+import Engine.InternalTypes
 import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), parseJSON)
 
 data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
 	{ playerRenderer :: state -> PlayerIndex -> Screen zone entity
 --	, newGame :: [PlayerIndex] -> StdGen -> Maybe a -- TODO: reevaluate. Maybe this needs to go?
+	, handleInput :: InputHandler state entity zone
+	, state :: MVar state
+
 	, tick :: state -> TimeDiff -> GameDelta state entity zone -- TODO: nuke this.
 -- TODO: replace 'tick' with "player time remaining", fabricate "UITimeout" events.
-	, handleInput :: InputHandler state entity zone
 	, getPlayers :: state -> [PlayerIndex] -- TODO: reevaluate. 
-	, state :: MVar state
 --	, parseEntity :: ByteString -> Maybe b
 	, finished :: state -> Bool
 	}
@@ -136,3 +141,4 @@ instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 
 instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity, [ScreenEntity entity]) where
 	toJSON (zd, ses) = object ["display" .= zd, "entities" .= ses]
+

@@ -14,6 +14,7 @@ module Engine.Statebags
 	) where
 	
 import Engine.Types
+import Engine.InternalTypes
 import qualified Network.WebSockets as WS
 import qualified Data.Map as Map
 import Control.Concurrent.MVar (MVar)
@@ -55,17 +56,17 @@ data ModMap k a = ModMap
 	,   internalMap :: MVar (Map.Map Int a)
 	}
 
-insert :: Keyable k => a -> ModMap k a -> IO k
-insert e theMap = do
+insert :: Keyable k => a -> ModMap k a -> WithMemory k
+insert e theMap = WM $ do
 	key <- modifyMVar (nextKey theMap) (\i -> return (fromInt $ toInt i+1, i))
 	modifyMVar_ (internalMap theMap) (\map' -> return $ Map.insert (toInt key) e map')
 	return key
 	
-delete :: Keyable k => k -> ModMap k a -> IO ()
-delete e theMap = modifyMVar_ (internalMap theMap) (\map' -> return $ Map.delete (toInt e) map')
+delete :: Keyable k => k -> ModMap k a -> WithMemory ()
+delete e theMap = WM $ modifyMVar_ (internalMap theMap) (\map' -> return $ Map.delete (toInt e) map')
 
-update :: Keyable k => k -> ModMap k a -> (a -> a) -> IO ()
-update e theMap updater = do
+update :: Keyable k => k -> ModMap k a -> (a -> a) -> WithMemory ()
+update e theMap updater = WM $ do
 	let adjustment = Map.adjust updater (toInt e)
 	modifyMVar_ (internalMap theMap) $ return . adjustment
 
@@ -74,8 +75,8 @@ twiddle e theMap twiddler = do
 	map' <- readMVar (internalMap theMap)
 	forM (Map.lookup (toInt e) map') twiddler
 	
-makeModMap :: Keyable k => IO (ModMap k a)
-makeModMap = do
+makeModMap :: Keyable k => WithMemory (ModMap k a)
+makeModMap = WM $ do
 	key <- newMVar $ fromInt 1
 	map' <- newMVar Map.empty
 	return $ ModMap key map'

@@ -3,6 +3,7 @@
 module Rules.CardTable.Types
 	( CardZone(..)
 	, CardTableState (..)
+	, CardEntity (..)
 	) where
 	
 import Engine.Types
@@ -10,12 +11,14 @@ import Data.Aeson (ToJSON, FromJSON, Value(..), parseJSON)
 import Data.Text (pack, unpack, breakOn, breakOnEnd)
 import Text.Read (readMaybe)
 import Control.Monad (mzero)
+import System.Random (StdGen)
 
 data CardTableState = CTS
-	{ hands :: [CardEntity]
-	, decks :: [CardEntity]
-	, table :: [CardEntity]
-	, discard :: [CardEntity]
+	{ hands :: [[CardEntity]]
+	, decks :: [[CardEntity]]
+	, tables :: [[CardEntity]]
+	, discards :: [[CardEntity]]
+	, rng :: StdGen
 	}
 	
 data CardZone
@@ -52,6 +55,8 @@ data CardEntity
 	= CECard String Int -- suit, "rank"
 	deriving (Show, Eq)
 	
+instance EntityId CardEntity
+	
 instance ToJSON CardEntity where
 	toJSON (CECard suit rank) = String $ pack $ "card-" ++ suit ++ "-" ++ show rank
 	
@@ -69,3 +74,5 @@ instance FromJSON CardEntity where
 		  where			
 			(entityType, rst) = breakOn "-" v
 	parseJSON _ = mzero
+	
+instance GameState CardTableState
