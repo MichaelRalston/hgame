@@ -79,7 +79,14 @@ function getZone(zoneId, zoneData) {
 
 function moveIfNeeded($parent, $elem) {
 	if (!$parent.is($elem.parent())) {
+		var atBottom = false;
+		if ($parent.length && $parent.scrollTop() + $parent.innerHeight() >= $parent[0].scrollHeight) {
+			atBottom = true;
+		}
 		$elem.appendTo($parent);
+		if (atBottom) {
+			$parent.scrollTop($parent[0].scrollHeight - $parent.innerHeight());
+		}
 	}
 }
 
