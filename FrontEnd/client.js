@@ -21,23 +21,31 @@ function makeEntityElement(entityJson) {
 	switch (entityJson.display.type) {
 		case 'image':
 			var $elem = $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
-			return $elem;
+			break;
 		case 'text':
 			var $elem = $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
-			return $elem;
+			break;
 		case 'textInput':
 			var $elem = $('<input type="text" id="entity-"'+entityJson.entityId+'" />');
 			$elem.keyup(function(e) {
 				handleTextKey($elem, e, entityJson.entityId);
 			});
-			return $elem;
+			break;
 		default:
-			return $('#id_that_does_not_exist_ever');
+			$elem = $('#id_that_does_not_exist_ever');
 	}
+	switch (entityJson.size.type) {
+		case "percent":
+			$elem.width(entityJson.size.width+"%");
+			$elem.height(entityJson.size.height+"%");
+			break;
+		default: break; // nothing.
+	}
+	return $elem;
 }
 
 function entityElement(entityJson) {
-	var $elem = $('#' + entityJson.entityId);
+	var $elem = $('#entity-' + entityJson.entityId);
 	if ($elem.length == 0) {
 		$elem = makeEntityElement(entityJson);	
 	}
@@ -49,9 +57,52 @@ function moveEntityToZone(entityId, zoneId) {
 	$('#entity-'+entityId).detach().appendTo($('#zone-'+zoneId));
 }
 
+function makeZone(zoneId, zoneData) {
+	switch (zoneData.display.type) {
+		case "horizFill":
+			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.height+'% width:100%"></div>';
+			break;
+		default:
+			alert("Unimplemented zone type " + zoneData.display.type);
+			$zone = $('#id_that_does_not_exist_ever');			
+	}
+	return $zone;
+}
+
+function getZone(zoneId, zoneData) {
+	var $zone = $('#zone-'+zoneId);
+	if ($zone.length == 0) {
+		$zone = makeZone(zoneId, zoneData);
+	}
+	return $zone;
+}
+
+function placeZone($zone, zoneData) {
+	$zone.detach();
+	switch (zoneData.display.type) {
+		case "nested":
+			$('#zone-'+zoneData.display.zone).append($zone);
+			break;
+		default:
+			$('body').append($zone);
+			break;
+	}
+}
+
+function renderZone(zoneData) {
+	var zoneId = zoneData[0];
+	var zone = zoneData[1];
+	var $zone = getZone(zoneId, zone);
+	placeZone($zone, zone);
+	zone.entities.forEach(function(entity) {
+		$entity = entityElement(entity);
+		$entity.detach().appendTo($zone);
+	});
+}
+
 function renderScreen(screen) {
 	console.log("renderScreen", screen);
-	// TODO: implement. :<
+	screen.forEach(renderZone)
 }
 
 function showGamelog(gamelog) {
@@ -88,9 +139,6 @@ $(document).ready(function () {
 		console.log("transmitting ", text);
 		ws.send(JSON.stringify(text));
 	}
-	// Below this is hackery.
-	var $input = entityElement({'entityId':0,'display':{'type':'textInput'}});
-	$('#gamelog').after($input);
 });
 
 
