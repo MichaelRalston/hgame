@@ -60,7 +60,7 @@ function moveEntityToZone(entityId, zoneId) {
 function makeZone(zoneId, zoneData) {
 	switch (zoneData.display.type) {
 		case "horizFill":
-			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.height+'% width:100%"></div>';
+			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.height+'% width:100%"></div>');
 			break;
 		default:
 			alert("Unimplemented zone type " + zoneData.display.type);
