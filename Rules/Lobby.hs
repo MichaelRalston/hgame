@@ -7,6 +7,7 @@ module Rules.Lobby
 	) where
 	
 import qualified Engine.Types as ET
+import qualified Engine.Mechanics as EM
 import Control.Concurrent.MVar (newMVar, MVar)
 import System.Time (TimeDiff)
 import qualified Data.Map as Map
@@ -41,7 +42,7 @@ getPlayers :: LobbyState -> [ET.PlayerIndex]
 getPlayers LobbyState {activeParticipants} = activeParticipants
 
 addPlayer :: ConnectionMap -> WS.Connection -> GameId -> MVar LobbyState -> GameMap -> IO ConnectionId
-addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState $ (\LobbyState {activeParticipants} -> do
+addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState $ (\state@LobbyState {activeParticipants} -> do
 		let name = "The Drama Llama"
 		let newId = head $ [0..] \\ activeParticipants
 		let connInfo = ConnectionInfo
@@ -50,6 +51,8 @@ addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState 
 				,	gameData = (lobbyId, newId)
 				}
 		connectionId <- insert connInfo connectionMap
+		initialMessage <- EM.getPlayerState playerRenderer state newId
+		WS.sendDataMessage conn initialMessage
 		update lobbyId gameMap (\game@GameData {players} -> game {players = Map.insert newId connectionId players})
 		return (LobbyState $ newId:activeParticipants, connectionId)
 	)

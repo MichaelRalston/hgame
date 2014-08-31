@@ -3,6 +3,7 @@
 module Engine.Mechanics
 	( processInput
 	, runTick
+	, getPlayerState
 	, isFinished
 	) where
 	
@@ -54,6 +55,9 @@ buildResult playerList playerRenderer newGameState logs =
 
 getNameForPid :: {- whatever parameters are required -} PlayerIndex -> IO String -- TO CONSIDER: kill this, put it in a transform on the /screen/, and let the frontend do the translation.
 getNameForPid pid = return $ "Player " ++ (show $ pid+1)
+
+getPlayerState :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> PlayerIndex -> IO DataMessage
+getPlayerState renderer state pid = getPlayerUpdate renderer state [] pid
 	
 getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage
 getPlayerUpdate renderer state logs pid = do
