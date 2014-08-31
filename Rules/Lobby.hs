@@ -16,6 +16,7 @@ import qualified Network.WebSockets as WS
 import Engine.Statebags
 import Control.Concurrent.MVar (modifyMVar)
 import Data.List ((\\))
+import qualified Data.List as List
 
 gamelogZone :: Int -- zone ID.
 gamelogZone = 0
@@ -27,7 +28,8 @@ handleInput (state@LobbyState {pendingGame}) pid (ET.UIClick input) =
 	case pendingGame of
 		Just g -> (state, [])
 		Nothing -> (state, [])
-handleInput state pid (ET.UIText entity str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
+handleInput state pid (ET.UIText _ str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
+handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
 handleInput state _ _ = (state, [])
 
 finished :: LobbyState -> Bool
