@@ -102,7 +102,7 @@ function renderZone(zoneData) {
 	placeZone($zone, zone);
 	zone.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
-		moveIfNeeded($zone, $elem);
+		moveIfNeeded($zone, $entity);
 	});
 }
 
