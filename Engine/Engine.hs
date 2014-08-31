@@ -40,6 +40,7 @@ wsApp gameMap connectionMap lobbyId lobbyState pendingConnection = do
 	-- ... although it might only be an issue here? And then later we already HAVE a connection
 	-- and have to update it. And the game ... will need an interface and whatever. SORT OUT.	
 	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
+	delete connId connectionMap
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
 handleConnectionInput gameMap connectionMap connectionId =
