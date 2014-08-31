@@ -77,6 +77,12 @@ function getZone(zoneId, zoneData) {
 	return $zone;
 }
 
+function moveIfNeeded($parent, $elem) {
+	if (!$parent.is($elem.parent())) {
+		$elem.appendTo($parent);
+	}
+}
+
 function placeZone($zone, zoneData) {
 	switch (zoneData.display.type) {
 		case "nested":
@@ -86,7 +92,7 @@ function placeZone($zone, zoneData) {
 			$parent = $('body');
 			break;
 	}
-	$zone.appendTo($parent);
+	moveIfNeed($parent, $zone);
 }
 
 function renderZone(zoneData) {
@@ -96,11 +102,7 @@ function renderZone(zoneData) {
 	placeZone($zone, zone);
 	zone.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
-		var focus = $entity.is(":focus");
-		$entity.appendTo($zone);
-		if (focus) {
-			$entity.focus();
-		}
+		moveIfNeeded($zone, $elem);
 	});
 }
 
