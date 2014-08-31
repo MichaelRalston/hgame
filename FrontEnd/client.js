@@ -54,7 +54,7 @@ function entityElement(entityJson) {
 
 function moveEntityToZone(entityId, zoneId) {
 	console.log("Move entity", entityId, "to zone", zoneId);
-	$('#entity-'+entityId).detach().appendTo($('#zone-'+zoneId));
+	$('#entity-'+entityId).appendTo($('#zone-'+zoneId));
 }
 
 function makeZone(zoneId, zoneData) {
@@ -78,15 +78,15 @@ function getZone(zoneId, zoneData) {
 }
 
 function placeZone($zone, zoneData) {
-	$zone.detach();
 	switch (zoneData.display.type) {
 		case "nested":
-			$('#zone-'+zoneData.display.zone).append($zone);
+			$parent = $('#zone-'+zoneData.display.zone);			
 			break;
 		default:
-			$('body').append($zone);
+			$parent = $('body');
 			break;
 	}
+	$zone.appendTo($parent);
 }
 
 function renderZone(zoneData) {
@@ -96,7 +96,11 @@ function renderZone(zoneData) {
 	placeZone($zone, zone);
 	zone.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
-		$entity.detach().appendTo($zone);
+		var focus = $entity.is(":focus");
+		$entity.appendTo($zone);
+		if (focus) {
+			$entity.focus();
+		}
 	});
 }
 
