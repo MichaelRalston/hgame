@@ -154,5 +154,3 @@ $(document).ready(function () {
 		ws.send(JSON.stringify(text));
 	}
 });
-
-

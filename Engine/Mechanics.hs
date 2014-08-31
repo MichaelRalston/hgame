@@ -5,6 +5,7 @@ module Engine.Mechanics
 	, runTick
 	, getPlayerState
 	, isFinished
+	, handleDisconnection
 	) where
 	
 import Engine.Types
@@ -32,18 +33,28 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 		result = buildResult playerList playerRenderer newGameState logs
 		playerList = getPlayers newGameState
 		(newGameState, logs) = tick state' timeDelta
-		
+
+handleDisconnection :: Game -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
+handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
+	modifyMVar state process
+		  where
+			process state' = (newGameState,) <$> result
+			  where
+				(newGameState, logs) = handleInput state' pid UIDisconnected
+				playerList = getPlayers newGameState
+				result = buildResult playerList playerRenderer newGameState logs
+					
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = 
 	case decode' m of
-		Just eid -> 
+		Just input -> 
 			modifyMVar state process
-			  where
-				process state' = (newGameState,) <$> result
 				  where
-					(newGameState, logs) = handleInput state' (traceS pid) (traceS eid)
-					playerList = getPlayers newGameState
-					result = buildResult playerList playerRenderer newGameState logs
+					process state' = (newGameState,) <$> result
+					  where
+						(newGameState, logs) = handleInput state' (traceS pid) (traceS input)
+						playerList = getPlayers newGameState
+						result = buildResult playerList playerRenderer newGameState logs
 		Nothing -> 
 			trace "processInput got invalid json" $ trace (show m) $ return [] -- TODO: handle error.
 processInput _ _ _ =

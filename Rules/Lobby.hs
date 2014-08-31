@@ -8,6 +8,7 @@ module Rules.Lobby
 	
 import qualified Engine.Types as ET
 import qualified Engine.Mechanics as EM
+import qualified Engine.Statebags as ES
 import Control.Concurrent.MVar (newMVar, MVar)
 import System.Time (TimeDiff)
 import qualified Data.Map as Map
@@ -22,9 +23,12 @@ inputZone :: Int -- also zone ID.
 inputZone = 1
 
 handleInput :: ET.InputHandler LobbyState Int Int
-handleInput state pid (ET.UIClick input) = (state, [ET.GLBroadcast [ET.GLMMove [input] pid, ET.GLMPlayerAction pid "clicked" gamelogZone]])
-handleInput state pid (ET.UIDrag entity zone) = (state, [ET.GLBroadcast [ET.GLMMove [entity] zone, ET.GLMPlayerAction pid "dragged" gamelogZone]])
+handleInput (state@LobbyState {pendingGame}) pid (ET.UIClick input) =
+	case pendingGame of
+		Just g -> (state, [])
+		Nothing -> (state, [])
 handleInput state pid (ET.UIText entity str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
+handleInput state _ _ = (state, [])
 
 finished :: LobbyState -> Bool
 finished _ = False
@@ -54,11 +58,12 @@ addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState 
 		initialMessage <- EM.getPlayerState playerRenderer state newId
 		WS.sendDataMessage conn initialMessage
 		update lobbyId gameMap (\game@GameData {players} -> game {players = Map.insert newId connectionId players})
-		return (LobbyState $ newId:activeParticipants, connectionId)
+		return (state {activeParticipants=newId:activeParticipants}, connectionId)
 	)
 
 data LobbyState = LobbyState
 	{ activeParticipants :: [ET.PlayerIndex]
+	, pendingGame :: Maybe ES.GameId
 	}
 	
 instance ET.GameState LobbyState
@@ -68,7 +73,7 @@ instance ET.ZoneId Int
 
 makeLobby :: GameMap -> IO (GameId, MVar LobbyState)
 makeLobby gameMap = do
-	state <- newMVar $ LobbyState []
+	state <- newMVar $ LobbyState [] Nothing
 	let game = ET.Game
 		{ ET.playerRenderer = playerRenderer
 		, ET.tick = tick

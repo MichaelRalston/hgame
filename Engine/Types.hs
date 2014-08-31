@@ -66,6 +66,7 @@ data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone	
 	| UIText entity String
+	| UIDisconnected
 	deriving Show
 
 data GamelogMessage entity zone
