@@ -26,7 +26,7 @@ function makeEntityElement(entityJson) {
 			var $elem = $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
 			break;
 		case 'textInput':
-			var $elem = $('<input type="text" id="entity-"'+entityJson.entityId+'" />');
+			var $elem = $('<input type="text" id="entity-'+entityJson.entityId+'" />');
 			$elem.keyup(function(e) {
 				handleTextKey($elem, e, entityJson.entityId);
 			});
@@ -62,7 +62,7 @@ function makeZone(zoneId, zoneData) {
 		case "horizFill":
 			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.height+'%; width:100%"></div>');
 			break;
-		default:
+		default: // todo: implement.
 			alert("Unimplemented zone type " + zoneData.display.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
@@ -108,7 +108,7 @@ function renderScreen(screen) {
 function showGamelog(gamelog) {
 	switch (gamelog.type) {
 		case 'display':
-			$('<p></p>').text(gamelog.display).appendTo($('#gamelog'));
+			$('<p></p>').text(gamelog.display).appendTo($('#zone-'+gamelog.zone));
 			break;
 		case 'move':
 			function move(entityId) {
@@ -117,9 +117,10 @@ function showGamelog(gamelog) {
 			gamelog.move.entities.forEach(move);
 			break;
 		case 'action':
-			$('<p></p>').text('<'+gamelog.actor+'> '+gamelog.string).appendTo($('#gamelog'));
+			$('<p></p>').text('<'+gamelog.actor+'> '+gamelog.string).appendTo($('#zone-'+gamelog.zone));
 			break;
 		case 'targetAction': // TODO: Implement.
+			alert("unimplemented gamelog type; targetAction");
 			break;
 	}
 }
