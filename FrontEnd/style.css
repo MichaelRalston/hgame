@@ -3,5 +3,5 @@
 }
 
 div {
-	overflow: scroll;
+	overflow: auto;
 }
