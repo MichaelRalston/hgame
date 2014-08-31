@@ -121,7 +121,7 @@ function renderScreen(screen) {
 function showGamelog(gamelog) {
 	switch (gamelog.type) {
 		case 'display':
-			$('<p></p>').text(gamelog.display).appendTo($('#zone-'+gamelog.zone));
+			moveIfNeeded($('#zone-'+gamelog.zone), $('<p></p>').text(gamelog.display));
 			break;
 		case 'move':
 			function move(entityId) {
@@ -130,7 +130,7 @@ function showGamelog(gamelog) {
 			gamelog.move.entities.forEach(move);
 			break;
 		case 'action':
-			$('<p></p>').text('<'+gamelog.actor+'> '+gamelog.string).appendTo($('#zone-'+gamelog.zone));
+			moveIfNeeded($('#zone-'+gamelog.zone), $('<p></p>').text('<'+gamelog.actor+'> '+gamelog.string));
 			break;
 		case 'targetAction': // TODO: Implement.
 			alert("unimplemented gamelog type; targetAction");
