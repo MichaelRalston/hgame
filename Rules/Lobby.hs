@@ -13,11 +13,13 @@ import Control.Concurrent.MVar (newMVar, MVar)
 import System.Time (TimeDiff)
 import qualified Data.Map as Map
 import qualified Network.WebSockets as WS
-import System.Random (newStdGen, StdGen)
+import System.Random (newStdGen, StdGen, split)
 import Engine.Statebags
 import Control.Concurrent.MVar (modifyMVar)
 import Data.List ((\\))
 import qualified Data.List as List
+
+import Rules.CardTable.CardTable (makeCardTable)
 
 gamelogZone :: Int -- zone ID.
 gamelogZone = 0
@@ -25,10 +27,14 @@ inputZone :: Int -- also zone ID.
 inputZone = 1
 
 handleInput :: ET.InputHandler LobbyState Int Int
-handleInput (state@LobbyState {pendingGame}) pid (ET.UIClick input) =
+handleInput (state@LobbyState {pendingGame, generator, gameMap}) pid (ET.UIClick input) =
 	case pendingGame of
 		Just g -> return $ (state, [])
-		Nothing -> return $ (state, [])
+		Nothing -> do
+			let (gen, gen') = split generator
+			newGame <- makeCardTable gen
+			newId <- insert (GameData {game=newGame, players=Map.empty}) gameMap
+			return $ (state {generator = gen', pendingGame = Just newId}, [])
 handleInput state pid (ET.UIText _ str) = return $ (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
 handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = return $ (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
 handleInput state _ _ = return $ (state, [])
@@ -68,6 +74,7 @@ data LobbyState = LobbyState
 	{ activeParticipants :: [ET.PlayerIndex]
 	, pendingGame :: Maybe ES.GameId
 	, generator :: StdGen
+	, gameMap :: GameMap
 	}
 	
 instance ET.GameState LobbyState
@@ -78,7 +85,7 @@ instance ET.ZoneId Int
 makeLobby :: GameMap -> IO (GameId, MVar LobbyState)
 makeLobby gameMap = do
 	gen <- newStdGen
-	state <- newMVar $ LobbyState [] Nothing gen
+	state <- newMVar $ LobbyState [] Nothing gen gameMap
 	let game = ET.Game
 		{ ET.playerRenderer = playerRenderer
 		, ET.tick = tick
