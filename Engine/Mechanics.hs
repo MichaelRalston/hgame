@@ -38,11 +38,11 @@ handleDisconnection :: Game -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
 handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
 	modifyMVar state process
 		  where
-			process state' = (newGameState,) <$> result
-			  where
-				(newGameState, logs) = handleInput state' pid UIDisconnected
-				playerList = getPlayers newGameState
-				result = buildResult playerList playerRenderer newGameState logs
+			process state' = do
+				(newGameState, logs) <- useMemory $ handleInput state' pid UIDisconnected
+				let playerList = getPlayers newGameState
+				let result = buildResult playerList playerRenderer newGameState logs
+				(newGameState,) <$> result
 					
 processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = 
@@ -50,11 +50,11 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 		Just input -> 
 			modifyMVar state process
 				  where
-					process state' = (newGameState,) <$> result
-					  where
-						(newGameState, logs) = handleInput state' (traceS pid) (traceS input)
-						playerList = getPlayers newGameState
-						result = buildResult playerList playerRenderer newGameState logs
+					process state' = do
+						(newGameState, logs) <- useMemory $ handleInput state' (traceS pid) (traceS input)
+						let playerList = getPlayers newGameState
+						let result = buildResult playerList playerRenderer newGameState logs
+						(newGameState,) <$> result
 		Nothing -> 
 			trace "processInput got invalid json" $ trace (show m) $ return [] -- TODO: handle error.
 processInput _ _ _ =

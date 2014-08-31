@@ -27,11 +27,11 @@ inputZone = 1
 handleInput :: ET.InputHandler LobbyState Int Int
 handleInput (state@LobbyState {pendingGame}) pid (ET.UIClick input) =
 	case pendingGame of
-		Just g -> (state, [])
-		Nothing -> (state, [])
-handleInput state pid (ET.UIText _ str) = (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
-handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
-handleInput state _ _ = (state, [])
+		Just g -> return $ (state, [])
+		Nothing -> return $ (state, [])
+handleInput state pid (ET.UIText _ str) = return $ (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
+handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = return $ (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
+handleInput state _ _ = return $ (state, [])
 
 finished :: LobbyState -> Bool
 finished _ = False

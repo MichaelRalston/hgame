@@ -46,7 +46,7 @@ data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId 
 	
 type GameDelta state entity zone = (state, [Gamelog entity zone])
 type Screen zone entity = Map (zone) (ZoneDisplay zone entity, [ScreenEntity entity])
-type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> GameDelta state entity zone
+type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> WithMemory (GameDelta state entity zone)
 
 class (Eq entity, FromJSON entity, ToJSON entity, Show entity) => EntityId entity
 class (Eq zone, FromJSON zone, ToJSON zone, Show zone) => ZoneId zone
