@@ -5,7 +5,6 @@ module Rules.CardTable.CardTable
 import Rules.CardTable.Types
 import Engine.Types
 import System.Random (StdGen)
-import Control.Concurrent (newMVar)
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
 renderer = undefined
@@ -13,10 +12,10 @@ renderer = undefined
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler = undefined
 	
-makeCardTable :: StdGen -> IO Game
+makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
 	let deck = [CECard suit rank | suit <- ["red", "blue", "purple", "yellow"], rank <- [1..15]]
-	tableState <- newMVar $ CTS
+	tableState <- alloc $ CTS
 		{ hands = [[],[]]
 		, decks = [deck,[]]
 		, tables = [[],[]]
