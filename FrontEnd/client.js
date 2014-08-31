@@ -92,7 +92,7 @@ function placeZone($zone, zoneData) {
 			$parent = $('body');
 			break;
 	}
-	moveIfNeed($parent, $zone);
+	moveIfNeeded($parent, $zone);
 }
 
 function renderZone(zoneData) {
