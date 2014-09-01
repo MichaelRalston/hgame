@@ -8,6 +8,7 @@ module Engine.Types
 	, GameMovement (..)
 	, ScreenDisplay (..)
 	, ZoneDisplay (..)
+	, ZoneDisplayData (..)
 	, GameState
 	, ScreenEntity (..)
 	, ScreenEntitySize (..)
@@ -49,7 +50,7 @@ data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId 
 	}
 	
 type GameDelta state entity zone = (state, [Gamelog entity zone], [GameMovement])
-type Screen zone entity = Map (zone) (ZoneDisplay zone entity, [ScreenEntity entity])
+type Screen zone entity = Map (zone) (ZoneDisplayData zone entity, [ScreenEntity entity])
 type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> WithMemory (GameDelta state entity zone)
 
 class (Eq entity, FromJSON entity, ToJSON entity, Show entity) => EntityId entity
@@ -95,6 +96,11 @@ data ScreenDisplay
 	| SDText String	
 	| SDTextInput
 	deriving Show
+	
+data ZoneDisplayData zone entity = ZDD
+	{ display :: ZoneDisplay zone entity
+	, order :: Int
+	}
 
 data ZoneDisplay zone entity
 	= ZDRight Int -- Float on the right, X% wide.
@@ -139,6 +145,9 @@ instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) wher
 	toJSON (ZDNested nested zoneId) = object ["type" .= String "nested", "display" .= nested, "zone" .= zoneId]
 	toJSON (ZDShelf entityId) = object ["type" .= String "shelf", "entity" .= entityId]
 	toJSON ZDDialog = object ["type" .= String "dialog"]
+	
+instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplayData zone entity) where
+	toJSON (ZDD {display, order}) = object ["display" .= display, "order" .= order]
 
 instance ToJSON (ScreenEntitySize) where
 	toJSON (SESPercent h w) = object ["type" .= String "percent", "height" .= h, "width" .= w]

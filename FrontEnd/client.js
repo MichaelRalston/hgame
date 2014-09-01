@@ -114,8 +114,8 @@ function placeZone($zone, zoneData) {
 function renderZone(zoneData) {
 	var zoneId = zoneData[0];
 	var zone = zoneData[1];
-	var $zone = getZone(zoneId, zone);
-	placeZone($zone, zone);
+	var $zone = getZone(zoneId, zone.display);
+	placeZone($zone, zone.display);
 	zone.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
 		moveIfNeeded($zone, $entity);
@@ -124,6 +124,9 @@ function renderZone(zoneData) {
 
 function renderScreen(screen) {
 	console.log("renderScreen", screen);
+	screen.sort(function(zoneData1, zoneData2) {
+		return zoneData2[1].order - zoneData1[1].order;
+	});
 	screen.forEach(renderZone)
 }
 
