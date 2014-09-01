@@ -25,11 +25,11 @@ import Control.Applicative ((<$>), (<*>))
 import Rules.CardTable.CardTable (makeCardTable)
 
 gamelogZone :: Int -- zone ID.
-gamelogZone = 0
+gamelogZone = 1
 inputZone :: Int -- also zone ID.
-inputZone = 1
+inputZone = 2
 dataZone :: Int
-dataZone = 2
+dataZone = 0
 
 handleInput :: ET.InputHandler LobbyState Int Int
 handleInput (state@LobbyState {pendingGame, generator, gameMap, activeParticipants, selfId = Just lobbyId}) pid (ET.UIClick input) =
