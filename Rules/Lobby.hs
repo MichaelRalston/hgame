@@ -18,6 +18,9 @@ import Engine.Statebags
 import Control.Concurrent.MVar (modifyMVar, modifyMVar_)
 import Data.List ((\\))
 import qualified Data.List as List
+import Control.Monad (join)
+
+import Control.Applicative ((<$>), (<*>))
 
 import Rules.CardTable.CardTable (makeCardTable)
 
@@ -27,15 +30,20 @@ inputZone :: Int -- also zone ID.
 inputZone = 1
 
 handleInput :: ET.InputHandler LobbyState Int Int
-handleInput (state@LobbyState {pendingGame, generator, gameMap}) pid (ET.UIClick input) =
+handleInput (state@LobbyState {pendingGame, generator, gameMap, activeParticipants, selfId = Just lobbyId}) pid (ET.UIClick input) =
 	case pendingGame of
 		Just g -> return $ (state, [])
 		Nothing -> do
 			let (gen, gen') = split generator
 			newGame <- makeCardTable gen -- todo: make players real.
-			newId <- insert (GameData {game=newGame, players=Map.empty}) gameMap
+			players <- twiddle lobbyId gameMap (return <$> players)
+			let connId = join $ Map.lookup <$> (Just pid) <*> players
+			let newGamePlayers = case connId of
+					Just c -> Map.singleton 0 c
+					Nothing -> Map.empty
+			newId <- insert (GameData {game=newGame, players=newGamePlayers}) gameMap
 			
-			return $ (state {generator = gen', pendingGame = Just newId}, [])
+			return $ (state {generator = gen', pendingGame = Just newId, activeParticipants=List.delete pid activeParticipants}, [])
 handleInput state pid (ET.UIText _ str) = return $ (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
 handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = return $ (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
 handleInput state _ _ = return $ (state, [])
