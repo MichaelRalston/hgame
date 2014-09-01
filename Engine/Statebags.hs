@@ -70,9 +70,9 @@ update e theMap updater = WM $ do
 	let adjustment = Map.adjust updater (toInt e)
 	modifyMVar_ (internalMap theMap) $ return . adjustment
 
-twiddle :: Keyable k => k -> ModMap k a -> (a -> IO r) -> IO (Maybe r)
+twiddle :: Keyable k => k -> ModMap k a -> (a -> WithMemory r) -> WithMemory (Maybe r)
 twiddle e theMap twiddler = do
-	map' <- readMVar (internalMap theMap)
+	map' <- WM $ readMVar (internalMap theMap)
 	forM (Map.lookup (toInt e) map') twiddler
 	
 makeModMap :: Keyable k => WithMemory (ModMap k a)

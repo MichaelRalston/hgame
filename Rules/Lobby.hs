@@ -15,7 +15,7 @@ import qualified Data.Map as Map
 import qualified Network.WebSockets as WS
 import System.Random (newStdGen, StdGen, split)
 import Engine.Statebags
-import Control.Concurrent.MVar (modifyMVar)
+import Control.Concurrent.MVar (modifyMVar, modifyMVar_)
 import Data.List ((\\))
 import qualified Data.List as List
 
@@ -32,8 +32,9 @@ handleInput (state@LobbyState {pendingGame, generator, gameMap}) pid (ET.UIClick
 		Just g -> return $ (state, [])
 		Nothing -> do
 			let (gen, gen') = split generator
-			newGame <- makeCardTable gen
+			newGame <- makeCardTable gen -- todo: make players real.
 			newId <- insert (GameData {game=newGame, players=Map.empty}) gameMap
+			
 			return $ (state {generator = gen', pendingGame = Just newId}, [])
 handleInput state pid (ET.UIText _ str) = return $ (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]])
 handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = return $ (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]])
@@ -64,7 +65,7 @@ addPlayer connectionMap conn lobbyId lobbyState gameMap = modifyMVar lobbyState 
 				,	gameData = (lobbyId, newId)
 				}
 		connectionId <- ET.useMemory $ insert connInfo connectionMap
-		initialMessage <- EM.getPlayerState playerRenderer state newId
+		initialMessage <- ET.useMemory $ EM.getPlayerState playerRenderer state newId
 		WS.sendDataMessage conn initialMessage
 		ET.useMemory $ update lobbyId gameMap (\game@GameData {players} -> game {players = Map.insert newId connectionId players})
 		return (state {activeParticipants=newId:activeParticipants}, connectionId)
@@ -75,6 +76,7 @@ data LobbyState = LobbyState
 	, pendingGame :: Maybe ES.GameId
 	, generator :: StdGen
 	, gameMap :: GameMap
+	, selfId :: Maybe GameId
 	}
 	
 instance ET.GameState LobbyState
@@ -85,7 +87,7 @@ instance ET.ZoneId Int
 makeLobby :: GameMap -> IO (GameId, MVar LobbyState)
 makeLobby gameMap = do
 	gen <- newStdGen
-	state <- newMVar $ LobbyState [] Nothing gen gameMap
+	state <- newMVar $ LobbyState [] Nothing gen gameMap Nothing
 	let game = ET.Game
 		{ ET.playerRenderer = playerRenderer
 		, ET.tick = tick
@@ -95,4 +97,5 @@ makeLobby gameMap = do
 		, ET.finished = finished
 		}
 	gameId <- ET.useMemory $ insert GameData {game=game, players=Map.empty} gameMap
+	modifyMVar_ state (\s -> return $ s {selfId = Just gameId})
 	return (gameId, state)

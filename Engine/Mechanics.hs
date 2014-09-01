@@ -10,7 +10,7 @@ module Engine.Mechanics
 	
 import Engine.Types
 import System.Time (TimeDiff)
-import Control.Concurrent.MVar (modifyMVar, withMVar)
+import Control.Concurrent.MVar (modifyMVar)
 import Data.Aeson (object, (.=), encode, decode', Value(..))
 import Network.WebSockets (DataMessage (..))
 import Control.Applicative ((<$>))
@@ -20,13 +20,13 @@ import Debug.Trace
 traceS a = trace (show a) a
 traceSs str a = trace str $ traceS a
 	
-isFinished :: Game -> IO Bool
+isFinished :: Game -> WithMemory Bool
 isFinished (Game {state, finished}) = do
-	withMVar state (return . finished)
+	usingMemory state (return . finished)
 	
-runTick :: Game -> TimeDiff -> IO [(PlayerIndex, DataMessage)]
+runTick :: Game -> TimeDiff -> WithMemory [(PlayerIndex, DataMessage)]
 runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
-	modifyMVar state process
+	modifyMemory state process
   where
 	process state' = (newGameState,) <$> result
 	  where
@@ -34,24 +34,24 @@ runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
 		playerList = getPlayers newGameState
 		(newGameState, logs) = tick state' timeDelta
 
-handleDisconnection :: Game -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
+handleDisconnection :: Game -> PlayerIndex -> WithMemory [(PlayerIndex, DataMessage)]
 handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
-	modifyMVar state process
+	modifyMemory state process
 		  where
 			process state' = do
-				(newGameState, logs) <- useMemory $ handleInput state' pid UIDisconnected
+				(newGameState, logs) <- handleInput state' pid UIDisconnected
 				let playerList = getPlayers newGameState
 				let result = buildResult playerList playerRenderer newGameState logs
 				(newGameState,) <$> result
 					
-processInput :: Game -> DataMessage -> PlayerIndex -> IO [(PlayerIndex, DataMessage)]
+processInput :: Game -> DataMessage -> PlayerIndex -> WithMemory [(PlayerIndex, DataMessage)]
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = 
 	case decode' m of
 		Just input -> 
-			modifyMVar state process
+			modifyMemory state process
 				  where
 					process state' = do
-						(newGameState, logs) <- useMemory $ handleInput state' (traceS pid) (traceS input)
+						(newGameState, logs) <- handleInput state' (traceS pid) (traceS input)
 						let playerList = getPlayers newGameState
 						let result = buildResult playerList playerRenderer newGameState logs
 						(newGameState,) <$> result
@@ -60,24 +60,24 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 processInput _ _ _ =
 	trace "processInput got invalid input" $ return [] -- TODO: handle error.
 
-buildResult :: (EntityId entity, ZoneId zone, GameState state) => [PlayerIndex] -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> IO [(PlayerIndex, DataMessage)]
+buildResult :: (EntityId entity, ZoneId zone, GameState state) => [PlayerIndex] -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> WithMemory [(PlayerIndex, DataMessage)]
 buildResult playerList playerRenderer newGameState logs =
 	sequence $ zipWith (\a b -> (a,) <$> b) playerList (map (getPlayerUpdate playerRenderer newGameState logs) playerList)
 
-getNameForPid :: {- whatever parameters are required -} PlayerIndex -> IO String -- TO CONSIDER: kill this, put it in a transform on the /screen/, and let the frontend do the translation.
+getNameForPid :: {- whatever parameters are required -} PlayerIndex -> WithMemory String -- TO CONSIDER: kill this, put it in a transform on the /screen/, and let the frontend do the translation.
 getNameForPid pid = return $ "Player " ++ (show $ pid+1)
 
-getPlayerState :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> PlayerIndex -> IO DataMessage
+getPlayerState :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> PlayerIndex -> WithMemory DataMessage
 getPlayerState renderer state pid = getPlayerUpdate renderer state [] pid
 	
-getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> IO DataMessage
+getPlayerUpdate :: (GameState state, EntityId entity, ZoneId zone) => (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> PlayerIndex -> WithMemory DataMessage
 getPlayerUpdate renderer state logs pid = do
 	let screenObject = renderer state pid
 	let gamelogs = filterGamelogs logs pid
 	gamelogObject <- sequence $ map (gameLogToJson getNameForPid) gamelogs
 	return $ Network.WebSockets.Text $ encode $ object ["screen" .= toJSON screenObject, "gamelogs" .= gamelogObject]
 	
-gameLogToJson :: (EntityId entity, ZoneId zone) => (PlayerIndex -> IO String) -> GamelogMessage entity zone -> IO Value
+gameLogToJson :: (EntityId entity, ZoneId zone) => (PlayerIndex -> WithMemory String) -> GamelogMessage entity zone -> WithMemory Value
 gameLogToJson _ (GLMDisplay str zone) = return $ object ["type" .= String "display", "display" .= toJSON str, "zone" .= zone]
 gameLogToJson _ (GLMMove entities zone) = return $ object ["type" .= String "move", "move" .= object ["entities" .= toJSON (map toJSON entities), "zone" .= toJSON zone]]
 gameLogToJson nameFinder (GLMPlayerAction pid str zone) = do

@@ -20,6 +20,8 @@ module Engine.Types
 	, WithMemory
 	, alloc
 	, useMemory
+	, modifyMemory
+	, usingMemory
 	) where
 	
 import Data.Map (Map, assocs)

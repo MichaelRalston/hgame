@@ -12,6 +12,7 @@ module Engine.Engine
 	) where
 
 import Engine.Types
+import Engine.InternalTypes
 import Engine.Mechanics
 import Engine.Statebags
 import Rules.Lobby (LobbyState)
@@ -39,29 +40,29 @@ wsApp gameMap connectionMap lobbyId lobbyState pendingConnection = do
 	-- TODO: address the problem of creating a game with a player.
 	-- ... although it might only be an issue here? And then later we already HAVE a connection
 	-- and have to update it. And the game ... will need an interface and whatever. SORT OUT.	
-	unfoldM_ $ handleConnectionInput gameMap connectionMap connId
-	_ <- twiddle connId connectionMap
+	unfoldM_ $ useMemory $ handleConnectionInput gameMap connectionMap connId
+	_ <- useMemory $ twiddle connId connectionMap
 		(\(ConnectionInfo {gameData=(gameId, playerIndex)}) -> do
-			twiddle gameId gameMap (\GameData {game, players}-> do
-				updates <- handleDisconnection game playerIndex
+			twiddle gameId gameMap (\GameData {game, players}-> WM $ do
+				updates <- useMemory $ handleDisconnection game playerIndex
 				sendUpdates connectionMap $ fixUpdates players updates
 				)
 		)
 	useMemory $ delete connId connectionMap
 	
-handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> IO (Maybe ())
+handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> WithMemory (Maybe ())
 handleConnectionInput gameMap connectionMap connectionId =
 	join <$> twiddle connectionId connectionMap
-		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> do
+		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> WM $ do
 			msg <- WS.receiveDataMessage connection
-			twiddle gameId gameMap (\GameData {game, players}-> do
-				updates <- processInput game msg playerIndex
+			useMemory $ twiddle gameId gameMap (\GameData {game, players}-> WM $ do
+				updates <- useMemory $ processInput game msg playerIndex
 				sendUpdates connectionMap $ fixUpdates players updates
 				)
 		)
 
 -- this is the per-game tick loop.	
-tickGame :: GameMap -> ConnectionMap -> GameId -> IO () -- TODO: figure out why ticking explodes :(
+{-tickGame :: GameMap -> ConnectionMap -> GameId -> IO () -- TODO: figure out why ticking explodes :(
 tickGame gameMap connectionMap gameId = do
 	time <- getClockTime
 	void $ forkIO $ doTick connectionMap gameMap gameId time
@@ -82,11 +83,12 @@ doTick connectionMap gameMap gameId startTime = do
 	case currentTime' of
 		Just currentTime -> doTick connectionMap gameMap gameId currentTime
 		Nothing -> useMemory $ delete gameId gameMap
+-}
 	
 sendUpdates :: ConnectionMap -> [(ConnectionId, WS.DataMessage)] -> IO ()
 sendUpdates connectionMap updates = void $ sequence $ map (uncurry $ sendMessageToPlayer connectionMap ) updates
 
 sendMessageToPlayer :: ConnectionMap -> ConnectionId -> WS.DataMessage -> IO ()
-sendMessageToPlayer connectionMap cid msg = void $ twiddle cid connectionMap (\(ConnectionInfo {connection}) ->
-		WS.sendDataMessage connection msg
+sendMessageToPlayer connectionMap cid msg = void $ useMemory $ twiddle cid connectionMap (\(ConnectionInfo {connection}) ->
+		WM $ WS.sendDataMessage connection msg
 	)
