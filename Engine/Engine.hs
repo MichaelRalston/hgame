@@ -41,21 +41,33 @@ wsApp gameMap connectionMap lobbyId lobbyState pendingConnection = do
 	unfoldM_ $ useMemory $ handleConnectionInput gameMap connectionMap connId
 	_ <- useMemory $ twiddle connId connectionMap
 		(\(ConnectionInfo {gameData=(gameId, playerIndex)}) -> do
-			twiddle gameId gameMap (\GameData {game, players}-> WM $ do
-				updates <- useMemory $ handleDisconnection game playerIndex
-				sendUpdates connectionMap $ fixUpdates players updates
+			_ <- twiddle gameId gameMap (\GameData {game, players}-> do
+				updates <- handleDisconnection game playerIndex
+				WM $ sendUpdates connectionMap $ fixUpdates players updates
 				)
+			update gameId gameMap (\gd@GameData {players} -> gd { players = Map.delete playerIndex players})				
 		)
 	useMemory $ delete connId connectionMap
 	
 handleConnectionInput :: GameMap -> ConnectionMap -> ConnectionId -> WithMemory (Maybe ())
 handleConnectionInput gameMap connectionMap connectionId =
 	join <$> twiddle connectionId connectionMap
-		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> WM $ do
-			msg <- WS.receiveDataMessage connection
-			useMemory $ twiddle gameId gameMap (\GameData {game, players}-> WM $ do
-				updates <- useMemory $ processInput game msg playerIndex
-				sendUpdates connectionMap $ fixUpdates players updates
+		(\(ConnectionInfo {gameData=(gameId, playerIndex), connection}) -> do
+			msg <- WM $ WS.receiveDataMessage connection
+			twiddle gameId gameMap (\GameData {game, players}-> do
+				(updates, gameMovement) <- processInput game msg playerIndex
+				_ <- mapM (\gm -> case gm of
+						(GMLeaveGame _) -> undefined
+						(GMMoveGame oldPid newGameId newPid) -> do
+							_ <- update gameId gameMap (\gd@GameData{players=players'} -> gd{players = Map.delete oldPid players'})
+							_ <- update newGameId gameMap (\gd@GameData{players=players'} -> gd{players = Map.insert newPid connectionId players'})
+							_ <- update connectionId connectionMap (\connInfo -> connInfo{gameData=(newGameId, newPid)})
+							twiddle newGameId gameMap (\GameData {game=game', players=players'} -> do
+								updates' <- handleConnection game' newPid
+								WM $ sendUpdates connectionMap $ fixUpdates players' updates'
+								)
+					) gameMovement
+				WM $ sendUpdates connectionMap $ fixUpdates players updates
 				)
 		)
 

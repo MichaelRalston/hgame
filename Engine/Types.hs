@@ -73,13 +73,14 @@ data Gamelog entity zone
 
 data GameMovement 
 	= GMLeaveGame PlayerIndex
-	| GMMoveGame PlayerIndex GameId
+	| GMMoveGame PlayerIndex GameId PlayerIndex
 	
 data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone	
 	| UIText entity String
 	| UIDisconnected
+	| UIConnected
 	deriving Show
 
 data GamelogMessage entity zone

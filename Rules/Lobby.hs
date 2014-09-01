@@ -29,12 +29,12 @@ dataZone = 0
 handleInput :: ET.InputHandler LobbyState Int Int
 handleInput (state@LobbyState {pendingGame, generator, gameMap, activeParticipants}) pid (ET.UIClick input) =
 	case pendingGame of
-		Just g -> return $ (state {pendingGame = Nothing, activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "joined a game" gamelogZone]], [ET.GMMoveGame pid g])
+		Just g -> return $ (state {pendingGame = Nothing, activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "joined a game" gamelogZone]], [ET.GMMoveGame pid g 1])
 		Nothing -> do
 			let (gen, gen') = split generator
 			newGame <- makeCardTable gen -- todo: make players real.
 			newId <- insert (GameData {game=newGame, players=Map.empty}) gameMap
-			return $ (state {generator = gen', pendingGame = Just newId, activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "created a game" gamelogZone]], [ET.GMMoveGame pid newId])
+			return $ (state {generator = gen', pendingGame = Just newId, activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "created a game" gamelogZone]], [ET.GMMoveGame pid newId 0])
 handleInput state pid (ET.UIText _ str) = return $ (state, [ET.GLBroadcast [ET.GLMPlayerAction pid str gamelogZone]], [])
 handleInput (state@LobbyState {activeParticipants}) pid ET.UIDisconnected = return $ (state{activeParticipants=List.delete pid activeParticipants}, [ET.GLBroadcast [ET.GLMPlayerAction pid "disconnected" gamelogZone]], [])
 handleInput state _ _ = return $ (state, [], [])

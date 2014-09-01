@@ -5,6 +5,7 @@ module Engine.Mechanics
 	, getPlayerState
 	, isFinished
 	, handleDisconnection
+	, handleConnection
 	) where
 	
 import Engine.Types
@@ -32,7 +33,17 @@ handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid 
 				let result = buildResult playerList playerRenderer newGameState logs
 				(newGameState,) <$> result
 					
-processInput :: Game -> DataMessage -> PlayerIndex -> WithMemory [(PlayerIndex, DataMessage)]
+handleConnection :: Game -> PlayerIndex -> WithMemory [(PlayerIndex, DataMessage)]
+handleConnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
+	modifyMemory state process
+		  where
+			process state' = do
+				(newGameState, logs, gameMovement) <- handleInput state' pid UIConnected
+				let playerList = getPlayers newGameState
+				let result = buildResult playerList playerRenderer newGameState logs
+				(newGameState,) <$> result
+					
+processInput :: Game -> DataMessage -> PlayerIndex -> WithMemory ([(PlayerIndex, DataMessage)], [GameMovement])
 processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pid = 
 	case decode' m of
 		Just input -> 
@@ -42,11 +53,11 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 						(newGameState, logs, gameMovement) <- handleInput state' (traceS pid) (traceS input)
 						let playerList = getPlayers newGameState
 						let result = buildResult playerList playerRenderer newGameState logs
-						(newGameState,) <$> result
+						(newGameState,) <$> (,gameMovement) <$> result
 		Nothing -> 
-			trace "processInput got invalid json" $ trace (show m) $ return [] -- TODO: handle error.
+			trace "processInput got invalid json" $ trace (show m) $ return ([], []) -- TODO: handle error.
 processInput _ _ _ =
-	trace "processInput got invalid input" $ return [] -- TODO: handle error.
+	trace "processInput got invalid input" $ return ([], []) -- TODO: handle error.
 
 buildResult :: (EntityId entity, ZoneId zone, GameState state) => [PlayerIndex] -> (state -> PlayerIndex -> Screen zone entity) -> state -> [Gamelog entity zone] -> WithMemory [(PlayerIndex, DataMessage)]
 buildResult playerList playerRenderer newGameState logs =
