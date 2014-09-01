@@ -21,9 +21,15 @@ function makeEntityElement(entityJson) {
 	switch (entityJson.display.type) {
 		case 'image':
 			var $elem = $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
+			$elem.click(function() {
+				sendMsg({'action':'click','entity':entityJson.entityId});
+			});
 			break;
 		case 'text':
 			var $elem = $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
+			$elem.click(function() {
+				sendMsg({'action':'click','entity':entityJson.entityId});
+			});
 			break;
 		case 'textInput':
 			var $elem = $('<input type="text" id="entity-'+entityJson.entityId+'" />');
