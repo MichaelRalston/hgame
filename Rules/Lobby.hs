@@ -28,6 +28,8 @@ gamelogZone :: Int -- zone ID.
 gamelogZone = 0
 inputZone :: Int -- also zone ID.
 inputZone = 1
+dataZone :: Int
+dataZone = 2
 
 handleInput :: ET.InputHandler LobbyState Int Int
 handleInput (state@LobbyState {pendingGame, generator, gameMap, activeParticipants, selfId = Just lobbyId}) pid (ET.UIClick input) =
@@ -53,7 +55,8 @@ finished _ = False
 
 playerRenderer :: LobbyState -> ET.PlayerIndex -> ET.Screen Int Int
 playerRenderer _ _ = Map.fromList 
-	[ (gamelogZone, (ET.ZDHorizFill 95,[]))
+	[ (dataZone, (ET.ZDHorizFill 5,[ET.SE 1 (ET.SDText "MAEK GAEM") (ET.SESAutoWidth 95) True]))
+	, (gamelogZone, (ET.ZDHorizFill 90,[]))
 	, (inputZone, (ET.ZDHorizFill 5,[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) True]))
 	]
 

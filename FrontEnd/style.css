@@ -9,3 +9,8 @@ div {
 p {
 	margin: 0;
 }
+
+img {
+	width: auto;
+	display: block;
+}

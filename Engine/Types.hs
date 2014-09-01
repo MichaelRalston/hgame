@@ -99,6 +99,7 @@ data ZoneDisplay zone entity
 
 data ScreenEntitySize
 	= SESPercent Int Int -- height% width%
+	| SESAutoWidth Int -- width auto, height%.
 	deriving Show
 	
 data ScreenEntity entity = SE
@@ -134,6 +135,7 @@ instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) wher
 
 instance ToJSON (ScreenEntitySize) where
 	toJSON (SESPercent h w) = object ["type" .= String "percent", "height" .= h, "width" .= w]
+	toJSON (SESAutoWidth h) = object ["type" .= String "autoWidth", "height" .= h]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eSize, eActive} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize]

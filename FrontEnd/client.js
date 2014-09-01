@@ -45,6 +45,9 @@ function makeEntityElement(entityJson) {
 			$elem.width(entityJson.size.width+"%");
 			$elem.height(entityJson.size.height+"%");
 			break;
+		case "autoWidth":
+			$elem.height(entityJson.size.height+"%");
+			break;
 		default: break; // nothing.
 	}
 	return $elem;
