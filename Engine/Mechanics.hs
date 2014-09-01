@@ -2,15 +2,13 @@
 
 module Engine.Mechanics
 	( processInput
-	, runTick
 	, getPlayerState
 	, isFinished
 	, handleDisconnection
 	) where
 	
 import Engine.Types
-import System.Time (TimeDiff)
-import Control.Concurrent.MVar (modifyMVar)
+--import System.Time (TimeDiff)
 import Data.Aeson (object, (.=), encode, decode', Value(..))
 import Network.WebSockets (DataMessage (..))
 import Control.Applicative ((<$>))
@@ -24,22 +22,12 @@ isFinished :: Game -> WithMemory Bool
 isFinished (Game {state, finished}) = do
 	usingMemory state (return . finished)
 	
-runTick :: Game -> TimeDiff -> WithMemory [(PlayerIndex, DataMessage)]
-runTick (Game {state, tick, getPlayers, playerRenderer}) timeDelta = do
-	modifyMemory state process
-  where
-	process state' = (newGameState,) <$> result
-	  where
-		result = buildResult playerList playerRenderer newGameState logs
-		playerList = getPlayers newGameState
-		(newGameState, logs) = tick state' timeDelta
-
 handleDisconnection :: Game -> PlayerIndex -> WithMemory [(PlayerIndex, DataMessage)]
 handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
 	modifyMemory state process
 		  where
 			process state' = do
-				(newGameState, logs) <- handleInput state' pid UIDisconnected
+				(newGameState, logs, gameMovement) <- handleInput state' pid UIDisconnected
 				let playerList = getPlayers newGameState
 				let result = buildResult playerList playerRenderer newGameState logs
 				(newGameState,) <$> result
@@ -51,7 +39,7 @@ processInput (Game {state, handleInput, getPlayers, playerRenderer}) (Text m) pi
 			modifyMemory state process
 				  where
 					process state' = do
-						(newGameState, logs) <- handleInput state' (traceS pid) (traceS input)
+						(newGameState, logs, gameMovement) <- handleInput state' (traceS pid) (traceS input)
 						let playerList = getPlayers newGameState
 						let result = buildResult playerList playerRenderer newGameState logs
 						(newGameState,) <$> result

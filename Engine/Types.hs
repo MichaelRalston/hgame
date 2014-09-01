@@ -5,6 +5,7 @@ module Engine.Types
 	, PlayerIndex
 	, GameDelta
 	, EntityId
+	, GameMovement (..)
 	, ScreenDisplay (..)
 	, ZoneDisplay (..)
 	, GameState
@@ -17,6 +18,7 @@ module Engine.Types
 	, UserInput (..)
 	, toJSON
 	, Game (..)
+	, GameId
 	, WithMemory
 	, alloc
 	, useMemory
@@ -25,12 +27,13 @@ module Engine.Types
 	) where
 	
 import Data.Map (Map, assocs)
-import System.Time (TimeDiff)
+--import System.Time (TimeDiff)
 --import System.Random (StdGen)
 import Control.Concurrent.MVar (MVar)
 import Control.Applicative ((<*>), (<$>))
 import Control.Monad (mzero)
 import Engine.InternalTypes
+
 import Data.Aeson (FromJSON, ToJSON, toJSON, object, Value(..), (.=), (.:), parseJSON)
 
 data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId zone) => Game
@@ -39,14 +42,13 @@ data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId 
 	, handleInput :: InputHandler state entity zone
 	, state :: MVar state
 
-	, tick :: state -> TimeDiff -> GameDelta state entity zone -- TODO: nuke this.
 -- TODO: replace 'tick' with "player time remaining", fabricate "UITimeout" events.
 	, getPlayers :: state -> [PlayerIndex] -- TODO: reevaluate. 
 --	, parseEntity :: ByteString -> Maybe b
 	, finished :: state -> Bool
 	}
 	
-type GameDelta state entity zone = (state, [Gamelog entity zone])
+type GameDelta state entity zone = (state, [Gamelog entity zone], [GameMovement])
 type Screen zone entity = Map (zone) (ZoneDisplay zone entity, [ScreenEntity entity])
 type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> WithMemory (GameDelta state entity zone)
 
@@ -69,6 +71,10 @@ data Gamelog entity zone
         }
 	deriving Show
 
+data GameMovement 
+	= GMLeaveGame PlayerIndex
+	| GMMoveGame PlayerIndex GameId
+	
 data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone	

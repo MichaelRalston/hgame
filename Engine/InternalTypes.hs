@@ -2,6 +2,7 @@
 
 module Engine.InternalTypes
 	( WithMemory (..)
+	, GameId (..)
 	, useMemory
 	, alloc
 	, modifyMemory
@@ -13,6 +14,8 @@ import Control.Concurrent (MVar, newMVar, modifyMVar, withMVar)
 	
 newtype WithMemory a = WM (IO a)
 	deriving (Monad, Applicative, Functor)
+	
+data GameId = GameId Int
 	
 useMemory :: WithMemory a -> IO a
 useMemory (WM action) = action

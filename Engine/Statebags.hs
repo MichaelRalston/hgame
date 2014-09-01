@@ -1,6 +1,5 @@
 module Engine.Statebags
-	( GameId
-	, ConnectionId
+	( ConnectionId
 	, ConnectionInfo (..)
 	, GameData (..)
 	, ConnectionMap
@@ -21,7 +20,6 @@ import Control.Concurrent.MVar (MVar)
 import Control.Concurrent.MVar (modifyMVar, modifyMVar_, readMVar, newMVar)
 import Data.Traversable (forM)
 
-data GameId = GameId Int
 data ConnectionId = ConnectionId Int
 
 type ConnectionMap = ModMap ConnectionId ConnectionInfo

@@ -24,7 +24,6 @@ makeCardTable generator = do
 		}		
 	return Game
 		{ playerRenderer = renderer
-		, tick = undefined
 		, getPlayers = (\_ -> [0, 1])
 		, handleInput = inputHandler
 		, state = tableState

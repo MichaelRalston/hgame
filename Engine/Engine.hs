@@ -25,8 +25,6 @@ import Data.Maybe (mapMaybe)
 import Control.Monad (void, join)
 import Control.Monad.Loops (unfoldM_)
 import Control.Applicative ((<$>))
-import Control.Concurrent (threadDelay, forkIO)
-import System.Time (getClockTime, ClockTime, diffClockTimes)
 
 fixUpdates :: Map.Map PlayerIndex ConnectionId -> [(PlayerIndex, a)] -> [(ConnectionId, a)]
 fixUpdates map' list' = mapMaybe (\(k,v) -> (,v) <$> Map.lookup k map') list'
