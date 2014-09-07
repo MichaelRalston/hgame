@@ -66,14 +66,21 @@ function moveEntityToZone(entityId, zoneId) {
 	$('#entity-'+entityId).appendTo($('#zone-'+zoneId));
 }
 
-function makeZone(zoneData) {
-	var zoneId = zoneData.zoneId;
-	switch (zoneData.display.display.type) {
+function makeZone(zoneId, displayData) {
+	switch (displayData.type) {
 		case "horizFill":
-			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.display.height+'%; width:100%"></div>');
+			$zone = $('<div id="zone-'+zoneId+'" style="height:'+displayData.height+'%; width:100%"></div>');
 			break;
+		case "floatRight":
+			$zone = $('<div id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
+			break;
+		case "floatLeft":
+			$zone = $('<div id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
+			break;
+		case "nested":
+			return makeZone(zoneId, displayData.display);
 		default: // todo: implement.
-			alert("Unimplemented zone type " + zoneData.display.display.type);
+			alert("Unimplemented zone type " + displayData.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
 	return $zone;
@@ -83,7 +90,7 @@ function getZone(zoneData) {
 	var zoneId = zoneData.zoneId;
 	var $zone = $('#zone-'+zoneId);
 	if ($zone.length == 0) {
-		$zone = makeZone(zoneData);
+		$zone = makeZone(zoneData.zoneId, zoneData.display.display);
 	}
 	return $zone;
 }
