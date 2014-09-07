@@ -10,6 +10,7 @@ import System.Random (StdGen)
 import qualified Data.Map as Map
 import Safe (atMay)
 import System.Random (randomR)
+import Data.List (delete)
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
 renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ decks' ++ tables' ++ discards' ++ gamelog)
@@ -57,6 +58,24 @@ zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20}
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s pid (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+inputHandler s pid (UIDrag card zone) = return (moveCard s card zone, [GLBroadcast [GLMMove [card] zone]], []) -- TODO: update that to respect visibilities.
+inputHandler s _ (UIClick (CECard _ _)) = return (s, [], []) -- TODO: tap/untap?
+
+moveCard s _ CZGamelog = s
+moveCard s card (CZ CZHand idx) = (deleteCard s card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
+moveCard s card (CZ CZDeck idx) = (deleteCard s card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
+moveCard s card (CZ CZDiscard idx) = (deleteCard s card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
+moveCard s card (CZ CZPlay idx) = (deleteCard s card) { tables = insertForIdx (tables $ deleteCard s card) idx card }
+
+deleteCard s card = s
+	{ hands = map (delete card) $ hands s
+	, tables = map (delete card) $ tables s
+	, discards = map (delete card) $ discards s
+	, decks = map (delete card) $ decks s
+	}
+	
+insertForIdx :: [[a]] -> Int -> a -> [[a]]
+insertForIdx list idx updater = take idx list ++ [(updater:(head $ drop idx list))] ++ drop (idx+1) list
 
 updateForIdx :: [a] -> Int -> a -> [a]
 updateForIdx list idx updater = take idx list ++ [updater] ++ drop (idx+1) list
