@@ -10,12 +10,13 @@ import System.Random (StdGen)
 import qualified Data.Map as Map
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
-renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ decks' ++ tables' ++ discards')
+renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ decks' ++ tables' ++ discards' ++ gamelog)
   where
 	discards' = zipWith (renderZone (ConcealExcept pid) CZDiscard) [0..] discards
 	tables' = zipWith (renderZone (Show) CZPlay) [0..] tables
 	decks' = zipWith (renderZone (ConcealAll) CZDeck) [0..] decks
 	hands' = zipWith (renderZone (ConcealExcept pid) CZHand) [0..] hands
+	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order=0}, []))]
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	

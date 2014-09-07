@@ -22,7 +22,9 @@ data CardTableState = CTS
 	, rng :: StdGen
 	}
 	
-data CardZone = CZ CardZoneType PlayerIndex
+data CardZone
+	= CZ CardZoneType PlayerIndex
+	| CZGamelog
 	deriving (Show, Eq, Ord)
 	
 data CardZoneType
@@ -39,6 +41,7 @@ instance ToJSON CardZone where
 	toJSON (CZ CZPlay idx) = String $ pack $ "play-" ++ show idx
 	toJSON (CZ CZDeck idx) = String $ pack $ "deck-" ++ show idx
 	toJSON (CZ CZDiscard idx) = String $ pack $ "discard-" ++ show idx
+	toJSON (CZGamelog) = String $ pack $ "gamelog"
 	
 instance FromJSON CardZone where
 	parseJSON (String v) = 
