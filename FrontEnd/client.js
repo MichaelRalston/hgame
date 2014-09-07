@@ -98,6 +98,7 @@ function makeZone(zoneId, displayData) {
 	}
 	$zone.droppable({
 		drop: function(event, ui) {
+			console.log(ui);			
 			if (!$zone.is(ui.draggable.parent())) {
 				var id = ui.draggable.attr('id');
 				id.splice(0, 7);
