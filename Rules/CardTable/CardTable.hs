@@ -16,7 +16,7 @@ renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ de
 	tables' = zipWith (renderZone (Show) CZPlay) [0..] tables
 	decks' = zipWith (renderZone (ConcealAll) CZDeck) [0..] decks
 	hands' = zipWith (renderZone (ConcealExcept pid) CZHand) [0..] hands
-	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order=-100}, []))]
+	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100}, []))]
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	
