@@ -15,9 +15,7 @@ import Network.WebSockets (DataMessage (..))
 import Control.Applicative ((<$>))
 import Data.Maybe (mapMaybe)
 
-import Debug.Trace
-traceS a = trace (show a) a
-traceSs str a = trace str $ traceS a
+import Engine.Debug
 	
 isFinished :: Game -> WithMemory Bool
 isFinished (Game {state, finished}) = do
