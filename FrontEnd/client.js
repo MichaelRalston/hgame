@@ -69,7 +69,7 @@ function moveEntityToZone(entityId, zoneId) {
 function makeZone(zoneId, displayData) {
 	switch (displayData.type) {
 		case "horizFill":
-			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="height:'+displayData.height+'%; width:100%"></div>');
+			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="height:'+displayData.height+'%; width:auto"></div>');
 			break;
 		case "floatRight":
 			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
