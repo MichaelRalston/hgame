@@ -46,7 +46,7 @@ blankCard p t _ = SE { eId = CECard "blank" (p*100 + (fromEnum t)*10), eDisplay 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+4}
 zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 45, order=pid*10+2}
-zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 5) (CZ CZDiscard pid), order=pid*10+3}
+zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 5) (CZ CZPlay pid), order=pid*10+3}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 5, order=pid*20}
 
 inputHandler :: InputHandler CardTableState CardEntity CardZone
