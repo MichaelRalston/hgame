@@ -114,9 +114,9 @@ function placeZone($zone, zoneData) {
 }
 
 function renderZone(zoneData) {
-	var $zone = getZone(zone);
-	placeZone($zone, zone);
-	zone.entities.forEach(function(entity) {
+	var $zone = getZone(zoneData);
+	placeZone($zone, zoneData);
+	zoneData.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
 		moveIfNeeded($zone, $entity);
 	});
