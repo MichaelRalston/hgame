@@ -104,6 +104,7 @@ data ZoneDisplayData zone entity = ZDD
 
 data ZoneDisplay zone entity
 	= ZDRight Int -- Float on the right, X% wide.
+	| ZDLeft Int -- Float on the left, X% wide.
 	| ZDHorizFill Int -- 100% wide, X% tall
 	| ZDNested (ZoneDisplay zone entity) zone
 	| ZDShelf entity -- Hidden by default, but the entity whose ID is entity shows it.
@@ -141,6 +142,7 @@ instance ToJSON ScreenDisplay where
 
 instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) where
 	toJSON (ZDRight i) = object ["type" .= String "floatRight", "width" .= i]
+	toJSON (ZDLeft i) = object ["type" .= String "floatLeft", "width" .= i]
 	toJSON (ZDHorizFill i) = object ["type" .= String "horizFill", "height" .= i]
 	toJSON (ZDNested nested zoneId) = object ["type" .= String "nested", "display" .= nested, "zone" .= zoneId]
 	toJSON (ZDShelf entityId) = object ["type" .= String "shelf", "entity" .= entityId]

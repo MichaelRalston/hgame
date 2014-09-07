@@ -4,6 +4,7 @@ module Rules.CardTable.Types
 	( CardZone(..)
 	, CardTableState (..)
 	, CardEntity (..)
+	, CardZoneType (..)
 	) where
 	
 import Engine.Types
@@ -21,29 +22,32 @@ data CardTableState = CTS
 	, rng :: StdGen
 	}
 	
-data CardZone
-	= CZHand PlayerIndex
-	| CZPlay PlayerIndex
-	| CZDeck PlayerIndex
-	| CZDiscard PlayerIndex
-	deriving (Show, Eq)
+data CardZone = CZ CardZoneType PlayerIndex
+	deriving (Show, Eq, Ord)
+	
+data CardZoneType
+	= CZHand
+	| CZPlay
+	| CZDeck
+	| CZDiscard
+	deriving (Show, Eq, Ord, Enum)
 	
 instance ZoneId CardZone
 
 instance ToJSON CardZone where
-	toJSON (CZHand idx) = String $ pack $ "hand-" ++ show idx
-	toJSON (CZPlay idx) = String $ pack $ "play-" ++ show idx
-	toJSON (CZDeck idx) = String $ pack $ "deck-" ++ show idx
-	toJSON (CZDiscard idx) = String $ pack $ "discard-" ++ show idx
+	toJSON (CZ CZHand idx) = String $ pack $ "hand-" ++ show idx
+	toJSON (CZ CZPlay idx) = String $ pack $ "play-" ++ show idx
+	toJSON (CZ CZDeck idx) = String $ pack $ "deck-" ++ show idx
+	toJSON (CZ CZDiscard idx) = String $ pack $ "discard-" ++ show idx
 	
 instance FromJSON CardZone where
 	parseJSON (String v) = 
 		case (pfx, idx) of
 			(_, Nothing) -> mzero
-			("hand", Just index) -> return $ CZHand index
-			("play", Just index) -> return $ CZPlay index
-			("deck", Just index) -> return $ CZDeck index
-			("discard", Just index) -> return $ CZDiscard index
+			("hand", Just index) -> return $ CZ CZHand index
+			("play", Just index) -> return $ CZ CZPlay index
+			("deck", Just index) -> return $ CZ CZDeck index
+			("discard", Just index) -> return $ CZ CZDiscard index
 			(_, Just _) -> mzero
 		  where
 			idx = readMaybe $ unpack num
