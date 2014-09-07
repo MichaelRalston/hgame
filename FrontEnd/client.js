@@ -125,7 +125,7 @@ function renderZone(zoneData) {
 function renderScreen(screen) {
 	console.log("renderScreen", screen);
 	screen.sort(function(zoneData1, zoneData2) {
-		return zoneData2.display.order - zoneData1.display.order;
+		return zoneData1.display.order - zoneData2.display.order;
 	});
 	screen.forEach(renderZone)
 }
