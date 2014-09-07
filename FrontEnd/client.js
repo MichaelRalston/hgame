@@ -16,20 +16,33 @@ function handleTextKey($elem, e, entityId) {
 	}
 }
 
+function makeClickable($elem, entityId) {
+	$elem.click(function() {
+		sendMsg({'action':'click','entity':entityId});
+	});
+}
+
+function makeDraggable($elem, entityId) {
+	$elem.draggable({
+		helper: "clone",
+		opacity: 0.8,
+		revert: true,
+		snap: true
+	});
+}
+
 function makeEntityElement(entityJson) {
 	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
 			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
-			$elem.click(function() {
-				sendMsg({'action':'click','entity':entityJson.entityId});
-			});
+			makeClickable($elem, entityJson.entityId);
+			makeDraggable($elem, entityJson.entityId);
 			break;
 		case 'text':
 			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
-			$elem.click(function() {
-				sendMsg({'action':'click','entity':entityJson.entityId});
-			});
+			makeClickable($elem, entityJson.entityId);
+			makeDraggable($elem);
 			break;
 		case 'textInput':
 			var $elem = $('<input class="entity" type="text" id="entity-'+entityJson.entityId+'" />');
@@ -83,6 +96,15 @@ function makeZone(zoneId, displayData) {
 			alert("Unimplemented zone type " + displayData.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
+	$zone.droppable({
+		drop: function(event, ui) {
+			if (!$zone.is(ui.draggable.parent()) {
+				var id = ui.draggable.attr('id');
+				id.splice(0, 7);
+				sendMsg({'action':'drag','zone':zoneId,'entity':id});
+			}
+		}
+	});
 	return $zone;
 }
 
