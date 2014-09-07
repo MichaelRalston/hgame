@@ -14,6 +14,9 @@ import Text.Read (readMaybe)
 import Control.Monad (mzero)
 import System.Random (StdGen)
 
+import Debug.Trace
+traceSs str showable = trace (str ++ " " ++ (show showable)) showable
+
 data CardTableState = CTS
 	{ hands :: [[CardEntity]]
 	, decks :: [[CardEntity]]
@@ -74,12 +77,12 @@ instance FromJSON CardEntity where
 				Just rank -> return $ CECard (unpack suit) rank
 				Nothing -> mzero
 			  where
-				rnk = readMaybe $ unpack num
-				(_, num) = breakOnEnd "-" rest
-				(suit, rest) = breakOn "-" rst
+				rnk = traceSs "readMaybe of rnk" $ readMaybe $ unpack num
+				(_, num) = traceSs "break of rest" $ breakOnEnd "-" rest
+				(suit, rest) = traceSs "break of rst" $ breakOn "-" rst
 			_ -> mzero
 		  where			
-			(entityType, rst) = breakOn "-" v
+			(entityType, rst) = traceSs "break of v" $ breakOn "-" v
 	parseJSON _ = mzero
 	
 instance GameState CardTableState
