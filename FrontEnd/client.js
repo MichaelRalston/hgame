@@ -53,6 +53,10 @@ function makeEntityElement(entityJson) {
 		default:
 			$elem = $('#id_that_does_not_exist_ever');
 	}
+	return $elem;
+}
+
+function styleEntity($elem, entityJson) {
 	switch (entityJson.size.type) {
 		case "percent":
 			$elem.width(entityJson.size.width+"%");
@@ -60,10 +64,10 @@ function makeEntityElement(entityJson) {
 			break;
 		case "autoWidth":
 			$elem.height(entityJson.size.height+"%");
+			$elem.width("auto");
 			break;
 		default: break; // nothing.
 	}
-	return $elem;
 }
 
 function entityElement(entityJson) {
@@ -71,6 +75,7 @@ function entityElement(entityJson) {
 	if ($elem.length == 0) {
 		$elem = makeEntityElement(entityJson);	
 	}
+	styleEntity($elem, entityJson);
 	return $elem;		
 }
 
