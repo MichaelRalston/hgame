@@ -100,7 +100,7 @@ function makeZone(zoneId, displayData) {
 		drop: function(event, ui) {
 			if (!$zone.is(ui.draggable.parent())) {
 				var id = ui.draggable.attr('id');
-				sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(8)});
+				sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
 			}
 		}
 	});
