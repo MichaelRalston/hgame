@@ -75,7 +75,7 @@ function makeZone(zoneId, displayData) {
 			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
 			break;
 		case "floatLeft":
-			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
+			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: left;"></div>');
 			break;
 		case "nested":
 			return makeZone(zoneId, displayData.display);
