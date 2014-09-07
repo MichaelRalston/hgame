@@ -8,6 +8,8 @@ import Rules.CardTable.Types
 import Engine.Types
 import System.Random (StdGen)
 import qualified Data.Map as Map
+import Safe (atMay)
+import System.Random (randomR)
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
 renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ decks' ++ tables' ++ discards' ++ gamelog)
@@ -50,8 +52,33 @@ zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2}
 zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+3}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20}
 
+
+
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
+inputHandler s pid (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+
+updateForIdx :: [a] -> Int -> a -> [a]
+updateForIdx list idx updater = take idx list ++ [updater] ++ drop (idx+1) list
+
+processClick s CZHand _ = (s, [], [])
+processClick s CZPlay _ = (s, [], [])
+processClick s CZDiscard _ = (s, [], [])
+processClick s CZDeck pt = case (decks s) `atMay` pt of
+		Just [] -> (s {decks = updateForIdx (decks s) pt newDeck, discards = updateForIdx (discards s) pt [], rng = rng'}, [], [])
+		  where
+			(newDeck, rng') = shuffle (discards s !! pt) (rng s)
+		Just (card:newDeck) -> (s {decks = updateForIdx (decks s) pt newDeck, hands = updateForIdx (hands s) pt (card:(hands s !! pt))}, [], [])
+		_ -> (s, [], [])
+
+shuffle :: [a] -> StdGen -> ([a], StdGen)
+shuffle [] r = ([], r)
+shuffle a r = (elem:rest, r')
+  where
+	(idx, r'') = randomR (0, length a - 1) r 
+	elem = a !! idx
+	rest' = take idx a ++ drop (idx+1) a
+	(rest, r') = shuffle rest' r''
 	
 makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
