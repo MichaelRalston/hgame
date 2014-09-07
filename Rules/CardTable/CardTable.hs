@@ -39,7 +39,7 @@ renderCard :: CardEntity -> ScreenEntity CardEntity
 renderCard c@(CECard s r) =
 	SE
 		{ eId = c
-		, eDisplay = SDImage "/images/placeholder.jpg"
+		, eDisplay = SDImage "images/placeholder.jpg"
 		, eSize = SESAutoWidth 25
 		, eActive = True
 		}
