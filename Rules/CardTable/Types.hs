@@ -9,7 +9,7 @@ module Rules.CardTable.Types
 	
 import Engine.Types
 import Data.Aeson (ToJSON, FromJSON, Value(..), parseJSON)
-import Data.Text (pack, unpack, breakOn, breakOnEnd)
+import Data.Text (pack, unpack, breakOn, breakOnEnd, drop)
 import Text.Read (readMaybe)
 import Control.Monad (mzero)
 import System.Random (StdGen)
@@ -79,7 +79,7 @@ instance FromJSON CardEntity where
 			  where
 				rnk = traceSs "readMaybe of rnk" $ readMaybe $ unpack num
 				(_, num) = traceSs "break of rest" $ breakOnEnd "-" rest
-				(suit, rest) = traceSs "break of rst" $ breakOn "-" $ pack $ drop 1 $ unpack rst
+				(suit, rest) = traceSs "break of rst" $ breakOn "-" $ Data.Text.drop 1 $ rst
 			_ -> mzero
 		  where			
 			(entityType, rst) = traceSs "break of v" $ breakOn "-" v
