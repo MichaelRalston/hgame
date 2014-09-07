@@ -29,18 +29,23 @@ renderZone
 	-> PlayerIndex -- controller of the zone in question.
 	-> [CardEntity]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
-renderZone Show t p cards = (CZ t p, (zoneDisplay t p, map renderCard cards))
+renderZone Show t p cards = (CZ t p, (zoneDisplay t p, map (renderCard t) cards))
 renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, (blankCard p t 0 undefined):zipWith (blankCard p t) [1..] cards))
 renderZone (ConcealExcept pid) t p cards = (CZ t p, (zoneDisplay t p
-	, (if pid == p then (map renderCard) else (zipWith (blankCard p t) [0..])) cards
+	, (if pid == p then (map $ renderCard t) else (zipWith (blankCard p t) [0..])) cards
 	))
 
-renderCard :: CardEntity -> ScreenEntity CardEntity
-renderCard c@(CECard s r) =
+renderCard :: CardZoneType -> CardEntity -> ScreenEntity CardEntity
+renderCard t c@(CECard s r) =
 	SE
 		{ eId = c
 		, eDisplay = SDImage "images/placeholder.jpg"
-		, eSize = SESAutoWidth 25
+		, eSize = SESAutoWidth $ 
+			case t of 
+				CZHand -> 95
+				CZPlay -> 22
+				CZDeck -> 95
+				CZDiscard -> 22
 		, eActive = True
 		}
 		
