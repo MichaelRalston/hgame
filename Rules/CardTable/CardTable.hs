@@ -29,7 +29,7 @@ renderZone
 	-> [CardEntity]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t p cards = (CZ t p, (zoneDisplay t p, map renderCard cards))
-renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, zipWith (blankCard p t) [0..] cards))
+renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, (blankCard p t 0 undefined):zipWith (blankCard p t) [1..] cards))
 renderZone (ConcealExcept pid) t p cards = (CZ t p, (zoneDisplay t p
 	, (if pid == p then (map renderCard) else (zipWith (blankCard p t) [0..])) cards
 	))
