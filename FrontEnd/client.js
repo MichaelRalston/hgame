@@ -66,22 +66,24 @@ function moveEntityToZone(entityId, zoneId) {
 	$('#entity-'+entityId).appendTo($('#zone-'+zoneId));
 }
 
-function makeZone(zoneId, zoneData) {
-	switch (zoneData.display.type) {
+function makeZone(zoneData) {
+	var zoneId = zoneData.zoneId;
+	switch (zoneData.display.display.type) {
 		case "horizFill":
-			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.height+'%; width:100%"></div>');
+			$zone = $('<div id="zone-'+zoneId+'" style="height:'+zoneData.display.display.height+'%; width:100%"></div>');
 			break;
 		default: // todo: implement.
-			alert("Unimplemented zone type " + zoneData.display.type);
+			alert("Unimplemented zone type " + zoneData.display.display.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
 	return $zone;
 }
 
-function getZone(zoneId, zoneData) {
+function getZone(zoneData) {
+	var zoneId = zoneData.zoneId;
 	var $zone = $('#zone-'+zoneId);
 	if ($zone.length == 0) {
-		$zone = makeZone(zoneId, zoneData);
+		$zone = makeZone(zoneData);
 	}
 	return $zone;
 }
@@ -100,9 +102,9 @@ function moveIfNeeded($parent, $elem) {
 }
 
 function placeZone($zone, zoneData) {
-	switch (zoneData.display.type) {
+	switch (zoneData.display.display.type) {
 		case "nested":
-			$parent = $('#zone-'+zoneData.display.zone);			
+			$parent = $('#zone-'+zoneData.display.display.zone);			
 			break;
 		default:
 			$parent = $('body');
@@ -112,10 +114,8 @@ function placeZone($zone, zoneData) {
 }
 
 function renderZone(zoneData) {
-	var zoneId = zoneData[0];
-	var zone = zoneData[1];
-	var $zone = getZone(zoneId, zone.display);
-	placeZone($zone, zone.display);
+	var $zone = getZone(zone);
+	placeZone($zone, zone);
 	zone.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
 		moveIfNeeded($zone, $entity);
@@ -125,7 +125,7 @@ function renderZone(zoneData) {
 function renderScreen(screen) {
 	console.log("renderScreen", screen);
 	screen.sort(function(zoneData1, zoneData2) {
-		return zoneData2[1].order - zoneData1[1].order;
+		return zoneData2.display.order - zoneData1.display.order;
 	});
 	screen.forEach(renderZone)
 }
