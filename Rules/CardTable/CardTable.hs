@@ -26,9 +26,9 @@ renderZone
 	-> [CardEntity]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t p cards = (CZ t p, (zoneDisplay t p, map renderCard cards))
-renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, map (blankCard p t) cards))
+renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, zipWith (blankCard p t) [0..] cards))
 renderZone (ConcealExcept pid) t p cards = (CZ t p, (zoneDisplay t p
-	, map (if pid == p then renderCard else (blankCard p t)) cards
+	, (if pid == p then (map renderCard) else (zipWith (blankCard p t) [0..])) cards
 	))
 
 renderCard :: CardEntity -> ScreenEntity CardEntity
@@ -40,8 +40,8 @@ renderCard c@(CECard s r) =
 		, eActive = True
 		}
 		
-blankCard :: PlayerIndex -> CardZoneType -> CardEntity -> ScreenEntity CardEntity
-blankCard p t _ = SE { eId = CECard "blank" (p*100 + (fromEnum t)*10), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth 25, eActive = True}
+blankCard :: PlayerIndex -> CardZoneType -> Int -> CardEntity -> ScreenEntity CardEntity
+blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth 25, eActive = True}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+4}
