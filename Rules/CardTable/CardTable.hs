@@ -58,6 +58,7 @@ zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20}
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s pid (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+inputHandler s _ (UIDrag (CECard "blank" _) _) = return (s, [], [])
 inputHandler s pid (UIDrag card zone) = return (moveCard s card zone, [GLBroadcast [GLMMove [card] zone]], []) -- TODO: update that to respect visibilities.
 inputHandler s _ (UIClick (CECard _ _)) = return (s, [], []) -- TODO: tap/untap?
 
