@@ -50,7 +50,7 @@ zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 5) (CZ CZDiscard pid), 
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 5, order=pid*20}
 
 inputHandler :: InputHandler CardTableState CardEntity CardZone
-inputHandler = undefined
+inputHandler s _ UIConnected = return (s, [], [])
 	
 makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
