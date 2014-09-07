@@ -159,8 +159,7 @@ instance EntityId entity => ToJSON (ScreenEntity entity) where
 	toJSON SE {eId, eDisplay, eSize, eActive} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
-	toJSON screen = toJSON $ assocs screen
-
-instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity, [ScreenEntity entity]) where
-	toJSON (zd, ses) = object ["display" .= zd, "entities" .= ses]
+	toJSON screen = toJSON $ map renderScreenAssocs $ assocs screen
+	
+renderScreenAssocs (zd, ses) = object ["display" .= zd, "entities" .= ses]
 
