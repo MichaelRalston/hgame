@@ -102,7 +102,9 @@ function makeZone(zoneId, displayData) {
 				var id = ui.draggable.attr('id');
 				sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
 			}
-		}
+		},
+		tolerance: 'pointer',
+		greedy: true,
 	});
 	return $zone;
 }
