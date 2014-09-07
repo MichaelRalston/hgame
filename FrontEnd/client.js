@@ -20,19 +20,19 @@ function makeEntityElement(entityJson) {
 	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
-			var $elem = $('<img id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
+			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
 			$elem.click(function() {
 				sendMsg({'action':'click','entity':entityJson.entityId});
 			});
 			break;
 		case 'text':
-			var $elem = $('<div id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
+			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
 			$elem.click(function() {
 				sendMsg({'action':'click','entity':entityJson.entityId});
 			});
 			break;
 		case 'textInput':
-			var $elem = $('<input type="text" id="entity-'+entityJson.entityId+'" />');
+			var $elem = $('<input class="entity" type="text" id="entity-'+entityJson.entityId+'" />');
 			$elem.keyup(function(e) {
 				handleTextKey($elem, e, entityJson.entityId);
 			});
@@ -69,13 +69,13 @@ function moveEntityToZone(entityId, zoneId) {
 function makeZone(zoneId, displayData) {
 	switch (displayData.type) {
 		case "horizFill":
-			$zone = $('<div id="zone-'+zoneId+'" style="height:'+displayData.height+'%; width:100%"></div>');
+			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="height:'+displayData.height+'%; width:100%"></div>');
 			break;
 		case "floatRight":
-			$zone = $('<div id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
+			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
 			break;
 		case "floatLeft":
-			$zone = $('<div id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
+			$zone = $('<div class="zone" id="zone-'+zoneId+'" style="width:'+displayData.width+'%; height:100%; float: right;"></div>');
 			break;
 		case "nested":
 			return makeZone(zoneId, displayData.display);
@@ -135,6 +135,25 @@ function renderScreen(screen) {
 		return zoneData1.display.order - zoneData2.display.order;
 	});
 	screen.forEach(renderZone)
+	var zoneIds = $.map(screen, function(zoneData) {
+		return "zone-" + zoneData.zoneId;
+	});
+	var entityIds = [];
+	$.map(screen, function(zoneData) {
+		$.merge(entityIds, $.map(zoneData.entities, function(entity) {
+			return 'entity-' + entity.entityId;
+		}));
+	});
+	$('.zone').each(function() {
+		if (zoneIds.indexOf($(this).attr('id')) === -1) {
+			$(this).remove();
+		}
+	});	
+	$('.entity').each(function() {
+		if (entityIds.indexOf($(this).attr('id')) === -1) {
+			$(this).remove();
+		}
+	});	
 }
 
 function showGamelog(gamelog) {
