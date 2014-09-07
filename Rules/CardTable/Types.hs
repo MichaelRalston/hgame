@@ -79,7 +79,7 @@ instance FromJSON CardEntity where
 			  where
 				rnk = traceSs "readMaybe of rnk" $ readMaybe $ unpack num
 				(_, num) = traceSs "break of rest" $ breakOnEnd "-" rest
-				(suit, rest) = traceSs "break of rst" $ breakOn "-" rst
+				(suit, rest) = traceSs "break of rst" $ breakOn "-" $ drop 1 rst
 			_ -> mzero
 		  where			
 			(entityType, rst) = traceSs "break of v" $ breakOn "-" v
