@@ -14,3 +14,15 @@ img {
 	width: auto;
 	display: block;
 }
+
+.display-inline * {
+	display: inline-block;
+}
+
+.margin-onepct * {
+	margin: 1%;
+}
+
+.display-stacked * {
+	margin-top: -99%;
+}

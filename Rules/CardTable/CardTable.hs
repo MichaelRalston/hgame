@@ -19,7 +19,7 @@ renderer (CTS {hands, decks, tables, discards}) pid = Map.fromList (hands' ++ de
 	tables' = zipWith (renderZone (Show) CZPlay) [0..] tables
 	decks' = zipWith (renderZone (ConcealAll) CZDeck) [0..] decks
 	hands' = zipWith (renderZone (ConcealExcept pid) CZHand) [0..] hands
-	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100}, []))]
+	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[]}, []))]
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	
@@ -53,10 +53,10 @@ blankCard :: PlayerIndex -> CardZoneType -> Int -> CardEntity -> ScreenEntity Ca
 blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth 25, eActive = True}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
-zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4}
-zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2}
-zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+3}
-zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20}
+zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4, classNames = ["margin-onepct"]}
+zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2, classNames = ["display-inline", "margin-onepct"]}
+zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+3, classNames = ["display-stacked"]}
+zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepct"]}
 
 
 nameCard :: CardEntity -> String
