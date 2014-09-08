@@ -35,12 +35,12 @@ function makeEntityElement(entityJson) {
 	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
-			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'" src="'+entityJson.display.uri+'">');
+			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'">');
 			makeClickable($elem, entityJson.entityId);
 			makeDraggable($elem, entityJson.entityId);
 			break;
 		case 'text':
-			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>').text(entityJson.display.text);
+			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>');
 			makeClickable($elem, entityJson.entityId);
 			makeDraggable($elem);
 			break;
@@ -52,6 +52,7 @@ function makeEntityElement(entityJson) {
 			break;
 		default:
 			$elem = $('#id_that_does_not_exist_ever');
+			break;
 	}
 	return $elem;
 }
@@ -67,6 +68,16 @@ function styleEntity($elem, entityJson) {
 			$elem.width("auto");
 			break;
 		default: break; // nothing.
+	}
+	switch (entityJson.display.type) {
+		case: 'text':
+			$elem.text(entityJson.display.text)
+			break;
+		case 'image':
+			$elem.attr('src', entityJson.display.uri);
+			break;
+		default:
+			break;
 	}
 }
 
