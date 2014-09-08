@@ -19,6 +19,7 @@ data CardTableState = CTS
 	, decks :: [[CardEntity]]
 	, tables :: [[CardEntity]]
 	, discards :: [[CardEntity]]
+	-- TODO: figure out what goes here, to be the modifiers to in-play things.
 	, rng :: StdGen
 	}
 	

@@ -13,6 +13,7 @@ maintainer:          michael.ralston@gmail.com
 category:            Game
 build-type:          Simple
 extra-source-files:  README.md
+GHC-Options:		 -Wall
 cabal-version:       >=1.10
 
 executable hgame

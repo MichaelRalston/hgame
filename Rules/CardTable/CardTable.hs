@@ -36,7 +36,7 @@ renderZone (ConcealExcept pid) t p cards = (CZ t p, (zoneDisplay t p
 	))
 
 renderCard :: CardZoneType -> CardEntity -> ScreenEntity CardEntity
-renderCard t c@(CECard s r) =
+renderCard t c =
 	SE
 		{ eId = c
 		, eDisplay = SDImage "images/placeholder.jpg"
@@ -46,13 +46,14 @@ renderCard t c@(CECard s r) =
 				CZPlay -> 44
 				CZDeck -> 95
 				CZDiscard -> 44
+		, eEntitiesDropOn = t == CZPlay
+		, eDropOnEntities = False
 		, eActive = True
+		, eClasses = [] -- TODO: address rotation by 90 degrees.
 		}
-		
-blankCard :: PlayerIndex -> CardZoneType -> Int -> CardEntity -> ScreenEntity CardEntity
-blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True}
 
-cardCounter p t count = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True}
+cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
+cardCounter p t count = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = []}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4, classNames = ["margin-onepx", "bordered"]}
@@ -69,26 +70,29 @@ nameZone zone = show zone
 
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
-inputHandler s pid (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+inputHandler s _ (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
 inputHandler s _ (UIDrag (CECard "blank" _) _) = return (s, [], [])
 inputHandler s pid (UIDrag card zone) = return (moveCard s card zone, moveCardDisplay s pid card zone, [])
 inputHandler s _ (UIClick (CECard _ _)) = return (s, [], []) -- TODO: tap/untap?
 
-
+moveCardDisplay :: CardTableState -> PlayerIndex -> CardEntity -> CardZone -> [Gamelog CardEntity CardZone]
 moveCardDisplay _ pid card zone@(CZ CZPlay _) = [GLBroadcast [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
 moveCardDisplay s pid card zone@(CZ _ px) = if inPlay s card
 	then [GLBroadcast [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
 	else [GLPrivate [px] [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to " ++ nameZone zone) CZGamelog]]
-moveCardDisplay s _ _ _ = [] -- move fails for this..
+moveCardDisplay _ _ _ _ = [] -- move fails for this..
 
+inPlay :: CardTableState -> CardEntity -> Bool
 inPlay s card = True `elem` map (elem card) (tables s)
 
+moveCard :: CardTableState -> CardEntity -> CardZone -> CardTableState
 moveCard s _ CZGamelog = s
 moveCard s card (CZ CZHand idx) = (deleteCard s card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
 moveCard s card (CZ CZDeck idx) = (deleteCard s card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
 moveCard s card (CZ CZDiscard idx) = (deleteCard s card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
 moveCard s card (CZ CZPlay idx) = (deleteCard s card) { tables = insertForIdx (tables $ deleteCard s card) idx card }
 
+deleteCard :: CardTableState -> CardEntity -> CardTableState
 deleteCard s card = s
 	{ hands = map (delete card) $ hands s
 	, tables = map (delete card) $ tables s
@@ -102,6 +106,7 @@ insertForIdx list idx updater = take idx list ++ [(updater:(head $ drop idx list
 updateForIdx :: [a] -> Int -> a -> [a]
 updateForIdx list idx updater = take idx list ++ [updater] ++ drop (idx+1) list
 
+processClick :: CardTableState -> CardZoneType -> PlayerIndex -> GameDelta CardTableState CardEntity CardZone
 processClick s CZHand _ = (s, [], [])
 processClick s CZPlay _ = (s, [], [])
 processClick s CZDiscard _ = (s, [], [])
@@ -114,10 +119,10 @@ processClick s CZDeck pt = case (decks s) `atMay` pt of
 
 shuffle :: [a] -> StdGen -> ([a], StdGen)
 shuffle [] r = ([], r)
-shuffle a r = (elem:rest, r')
+shuffle a r = (element:rest, r')
   where
 	(idx, r'') = randomR (0, length a - 1) r 
-	elem = a !! idx
+	element = a !! idx
 	rest' = take idx a ++ drop (idx+1) a
 	(rest, r') = shuffle rest' r''
 	

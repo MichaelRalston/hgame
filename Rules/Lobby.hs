@@ -44,9 +44,9 @@ finished _ = False
 
 playerRenderer :: LobbyState -> ET.PlayerIndex -> ET.Screen Int Int
 playerRenderer _ _ = Map.fromList 
-	[ (dataZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=0, ET.classNames = []},[ET.SE 1 (ET.SDText "MAEK GAEM") (ET.SESAutoWidth 95) True]))
+	[ (dataZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=0, ET.classNames = []},[ET.SE 1 (ET.SDText "MAEK GAEM") (ET.SESAutoWidth 95) False False True []]))
 	, (gamelogZone, (ET.ZDD {ET.display = ET.ZDHorizFill 90, ET.order=1, ET.classNames = []},[]))
-	, (inputZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=2, ET.classNames = []},[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) True]))
+	, (inputZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=2, ET.classNames = []},[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) False False True []]))
 	]
 
 getPlayers :: LobbyState -> [ET.PlayerIndex]

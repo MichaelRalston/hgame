@@ -79,6 +79,7 @@ data GameMovement
 data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone	
+	| UIDragEntity entity entity -- dragee, target.
 	| UIText entity String
 	| UIDisconnected
 	| UIConnected
@@ -121,8 +122,10 @@ data ScreenEntity entity = SE
 	{ eId :: entity
 	, eDisplay :: ScreenDisplay
 	, eSize :: ScreenEntitySize
-	-- TODO: Visual modifiers?
+	, eDropOnEntities :: Bool
+	, eEntitiesDropOn :: Bool
 	, eActive :: Bool
+	, eClasses :: [String]
 	}
 	deriving Show
 
@@ -132,6 +135,7 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 		case (action :: String) of
 			"click" -> UIClick <$> v .: "entity"
 			"drag" -> UIDrag <$> v .: "entity" <*> v .: "zone"
+			"dragEntity" -> UIDragEntity <$> v .: "entity" <*> v .: "target"
 			"text" -> UIText <$> v .: "entity" <*> v .: "text"
 			_ -> fail "unknown action"
 	parseJSON _ = mzero
@@ -157,7 +161,7 @@ instance ToJSON (ScreenEntitySize) where
 	toJSON (SESAutoWidth h) = object ["type" .= String "autoWidth", "height" .= h]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
-	toJSON SE {eId, eDisplay, eSize, eActive} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize]
+	toJSON SE {eId, eDisplay, eSize, eActive, eDropOnEntities, eEntitiesDropOn, eClasses} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize, "dropOnEntities" .= eDropOnEntities, "entitiesDropOn" .= eEntitiesDropOn, "classes" .= eClasses]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ map renderScreenAssocs $ assocs screen

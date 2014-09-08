@@ -26,7 +26,7 @@ handleDisconnection (Game {state, handleInput, getPlayers, playerRenderer}) pid 
 	modifyMemory state process
 		  where
 			process state' = do
-				(newGameState, logs, gameMovement) <- handleInput state' pid UIDisconnected
+				(newGameState, logs, _) <- handleInput state' pid UIDisconnected
 				let playerList = getPlayers newGameState
 				let result = buildResult playerList playerRenderer newGameState logs
 				(newGameState,) <$> result
@@ -36,7 +36,7 @@ handleConnection (Game {state, handleInput, getPlayers, playerRenderer}) pid =
 	modifyMemory state process
 		  where
 			process state' = do
-				(newGameState, logs, gameMovement) <- handleInput state' pid UIConnected
+				(newGameState, logs, _) <- handleInput state' pid UIConnected
 				let playerList = getPlayers newGameState
 				let result = buildResult playerList playerRenderer newGameState logs
 				(newGameState,) <$> result

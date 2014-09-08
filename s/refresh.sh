@@ -1,1 +1,1 @@
-git pull && cabal build && dist/build/hgame/hgame
+git pull && cabal build --ghc-options "-Wall" && dist/build/hgame/hgame
