@@ -24,5 +24,13 @@ img {
 }
 
 .display-stacked * {
-	margin-top: -99%;
+	margin-top: -99%;	
+}
+
+.display-stacked {
+	padding-top: 99%;
+}
+
+.display-block * {
+	display: block;
 }
