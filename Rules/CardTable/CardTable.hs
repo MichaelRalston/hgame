@@ -30,9 +30,9 @@ renderZone
 	-> [CardEntity]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t p cards = (CZ t p, (zoneDisplay t p, map (renderCard t) cards))
-renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, (blankCard p t 0 undefined):zipWith (blankCard p t) [1..] cards))
+renderZone ConcealAll t p cards = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
 renderZone (ConcealExcept pid) t p cards = (CZ t p, (zoneDisplay t p
-	, (if pid == p then (map $ renderCard t) else (zipWith (blankCard p t) [0..])) cards
+	, (if pid == p then (map (renderCard t) cards) else [cardCounter p t (length cards)])
 	))
 
 renderCard :: CardZoneType -> CardEntity -> ScreenEntity CardEntity
@@ -52,10 +52,12 @@ renderCard t c@(CECard s r) =
 blankCard :: PlayerIndex -> CardZoneType -> Int -> CardEntity -> ScreenEntity CardEntity
 blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True}
 
+cardCounter p t count = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True}
+
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4, classNames = ["margin-onepx", "bordered"]}
 zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2, classNames = ["display-inline", "margin-onepx"]}
-zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+3, classNames = ["display-block", "display-stacked"]}
+zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+3, classNames = []}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"]}
 
 
@@ -69,8 +71,17 @@ inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s pid (UIClick (CECard "blank" bidx)) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
 inputHandler s _ (UIDrag (CECard "blank" _) _) = return (s, [], [])
-inputHandler s pid (UIDrag card zone) = return (moveCard s card zone, [GLBroadcast [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]], []) -- TODO: update that to respect visibilities.
+inputHandler s pid (UIDrag card zone) = return (moveCard s card zone, moveCardDisplay s pid card zone, [])
 inputHandler s _ (UIClick (CECard _ _)) = return (s, [], []) -- TODO: tap/untap?
+
+
+moveCardDisplay _ pid card zone@(CZ CZPlay _) = [GLBroadcast [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
+moveCardDisplay s pid card zone@(CZ _ px) = if inPlay s card
+	then [GLBroadcast [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
+	else [GLPrivate [px] [GLMMove [card] zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to " ++ nameZone zone) CZGamelog]]
+moveCardDisplay s _ _ _ = [] -- move fails for this..
+
+inPlay s card = True `elem` map (elem card) (tables s)
 
 moveCard s _ CZGamelog = s
 moveCard s card (CZ CZHand idx) = (deleteCard s card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
