@@ -50,13 +50,13 @@ renderCard t c@(CECard s r) =
 		}
 		
 blankCard :: PlayerIndex -> CardZoneType -> Int -> CardEntity -> ScreenEntity CardEntity
-blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth 25, eActive = True}
+blankCard p t num _ = SE { eId = CECard "blank" (p*1000 + (fromEnum t)*100 + num), eDisplay = SDText "FACEDOWN", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
-zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4, classNames = ["margin-onepct"]}
-zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2, classNames = ["display-inline", "margin-onepct"]}
+zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+4, classNames = ["margin-onepx", "bordered"]}
+zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 40, order=pid*10+2, classNames = ["display-inline", "margin-onepx"]}
 zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+3, classNames = ["display-block", "display-stacked"]}
-zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepct"]}
+zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"]}
 
 
 nameCard :: CardEntity -> String

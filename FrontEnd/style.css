@@ -19,18 +19,23 @@ img {
 	display: inline-block;
 }
 
-.margin-onepct * {
-	margin: 1%;
+.margin-onepx * {
+	margin: 1px;
 }
 
 .display-stacked * {
-	margin-top: -99%;	
+	position: absolute;
+	top: 1%;
 }
 
 .display-stacked {
-	padding-top: 99%;
+	position: relative;
 }
 
 .display-block * {
 	display: block;
+}
+
+.bordered {
+	border: 1px solid black;
 }
