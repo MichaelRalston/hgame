@@ -70,7 +70,7 @@ function styleEntity($elem, entityJson) {
 		default: break; // nothing.
 	}
 	switch (entityJson.display.type) {
-		case: 'text':
+		case 'text':
 			$elem.text(entityJson.display.text)
 			break;
 		case 'image':
