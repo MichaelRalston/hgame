@@ -119,7 +119,7 @@ function getZone(zoneData) {
 	var $zone = $('#zone-'+zoneId);
 	if ($zone.length == 0) {
 		$zone = makeZone(zoneData.zoneId, zoneData.display.display);
-		zoneData.display.classNames.each(function(cn) {
+		zoneData.display.classNames.forEach(function(cn) {
 			$zone.addClass(cn);
 		});
 	}
