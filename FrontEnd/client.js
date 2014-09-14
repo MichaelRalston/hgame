@@ -37,7 +37,6 @@ function makeDraggable($elem, entityId, dropOnEntities) {
 function makeEntityDroppable($elem, entityId) {
 	$elem.droppable({
 		drop: function(event, ui) {
-			console.log("dropped on ", $elem);
 			if (!$elem.is(ui.draggable.parent())) {
 				var id = ui.draggable.attr('id');
 				sendMsg({'action':'dragEntity','target':entityId,'entity':id.slice(7)});
