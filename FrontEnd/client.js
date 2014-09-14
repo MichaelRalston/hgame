@@ -87,10 +87,11 @@ function styleEntity($elem, entityJson) {
 			break;
 		default: break; // nothing.
 	}
-	if (entityJson.entitiesDropOn && !$elem.instance()) {
+	if (entityJson.entitiesDropOn && !$elem.droppable('instance')) {
 		makeEntityDroppable($elem, entityJson.entityId);
 	}
-	if (!entityJson.entitiesDropOn && $elem.instance()) {
+	if (!entityJson.entitiesDropOn && $elem.droppable('instance')) {
+		$elem.droppable('destroy');
 	}
 	switch (entityJson.display.type) {
 		case 'text':
