@@ -22,12 +22,29 @@ function makeClickable($elem, entityId) {
 	});
 }
 
-function makeDraggable($elem, entityId) {
+function makeDraggable($elem, entityId, dropOnEntities) {
 	$elem.draggable({
 		helper: "clone",
 		opacity: 0.8,
 		revert: true,
 		snap: true
+	});
+	if (dropOnEntities) {
+		$elem.addClass("dropOnEntities");
+	}
+}
+
+function makeEntityDroppable($elem, entityId) {
+	$elem.droppable({
+		drop: function(event, ui) {
+			if (!$elem.is(ui.draggable.parent())) {
+				var id = ui.draggable.attr('id');
+				sendMsg({'action':'dragEntity','target':entityId,'entity':id.slice(7)});
+			}
+		},
+		tolerance: 'pointer',
+		greedy: true,
+		accept: ".dropOnEntities"
 	});
 }
 
@@ -37,12 +54,12 @@ function makeEntityElement(entityJson) {
 		case 'image':
 			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'">');
 			makeClickable($elem, entityJson.entityId);
-			makeDraggable($elem, entityJson.entityId);
+			makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
 			break;
 		case 'text':
 			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>');
 			makeClickable($elem, entityJson.entityId);
-			makeDraggable($elem);
+			makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
 			break;
 		case 'textInput':
 			var $elem = $('<input class="entity" type="text" id="entity-'+entityJson.entityId+'" />');
@@ -53,6 +70,9 @@ function makeEntityElement(entityJson) {
 		default:
 			$elem = $('#id_that_does_not_exist_ever');
 			break;
+	}
+	if (entityJson.entitiesDropOn) {
+		makeEntityDroppable($elem, entityJson.entityId);
 	}
 	return $elem;
 }
@@ -167,7 +187,11 @@ function renderZone(zoneData) {
 	placeZone($zone, zoneData);
 	zoneData.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
-		moveIfNeeded($zone, $entity);
+		if (entity.nestedEntity) {
+			moveIfNeeded($('#entity-' + entity.nestedEntity), $entity)
+		} else {
+			moveIfNeeded($zone, $entity);
+		}
 	});
 }
 

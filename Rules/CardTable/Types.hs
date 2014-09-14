@@ -19,13 +19,14 @@ data CardTableState = CTS
 	, decks :: [[CardEntity]]
 	, tables :: [[CardEntity]]
 	, discards :: [[CardEntity]]
-	-- TODO: figure out what goes here, to be the modifiers to in-play things.
+	, subEntities :: [(CardEntity, CardEntity)] -- subentity first, then what it's a subentity of.
 	, rng :: StdGen
 	}
 	
 data CardZone
 	= CZ CardZoneType PlayerIndex
 	| CZGamelog
+	| CZTokens
 	deriving (Show, Eq, Ord)
 	
 data CardZoneType
@@ -43,6 +44,7 @@ instance ToJSON CardZone where
 	toJSON (CZ CZDeck idx) = String $ pack $ "deck-" ++ show idx
 	toJSON (CZ CZDiscard idx) = String $ pack $ "discard-" ++ show idx
 	toJSON (CZGamelog) = String $ pack $ "gamelog"
+	toJSON (CZTokens) = String $ pack $ "tokens"
 	
 instance FromJSON CardZone where
 	parseJSON (String v) = 
@@ -61,12 +63,14 @@ instance FromJSON CardZone where
 	
 data CardEntity
 	= CECard String Int -- suit, "rank"
+	| CESubEntity String Int -- String for type? Int for 'index'. index 0 is the special global one.
 	deriving (Show, Eq)
 	
 instance EntityId CardEntity
 	
 instance ToJSON CardEntity where
 	toJSON (CECard suit rank) = String $ pack $ "card-" ++ suit ++ "-" ++ show rank
+	toJSON (CESubEntity setype idx) = String $ pack $ "subentity-" ++ setype ++ "-" ++ show idx
 	
 instance FromJSON CardEntity where
 	parseJSON (String v) =
@@ -78,9 +82,17 @@ instance FromJSON CardEntity where
 				rnk = readMaybe $ unpack num
 				(_, num) = breakOnEnd "-" rest
 				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
+			"subentity" -> case idx of
+				Just index -> return $ CESubEntity (unpack setype) index
+				Nothing -> mzero
+			  where
+				idx = readMaybe $ unpack num
+				(_, num) = breakOnEnd "-" rest
+				(setype, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
 			_ -> mzero
 		  where			
 			(entityType, rst) = breakOn "-" v
 	parseJSON _ = mzero
+
 	
 instance GameState CardTableState
