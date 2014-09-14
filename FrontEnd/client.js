@@ -72,9 +72,6 @@ function makeEntityElement(entityJson) {
 			$elem = $('#id_that_does_not_exist_ever');
 			break;
 	}
-	if (entityJson.entitiesDropOn) {
-		makeEntityDroppable($elem, entityJson.entityId);
-	}
 	return $elem;
 }
 
@@ -89,6 +86,11 @@ function styleEntity($elem, entityJson) {
 			$elem.width("auto");
 			break;
 		default: break; // nothing.
+	}
+	if (entityJson.entitiesDropOn && !$elem.instance()) {
+		makeEntityDroppable($elem, entityJson.entityId);
+	}
+	if (!entityJson.entitiesDropOn && $elem.instance()) {
 	}
 	switch (entityJson.display.type) {
 		case 'text':
