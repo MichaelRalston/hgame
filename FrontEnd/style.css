@@ -61,3 +61,16 @@ img {
 	-webkit-transform: rotate(180deg);
 	transform: rotate(180deg);
 }
+
+.drophover::after {
+	position:absolute;
+	z-index:1;
+	background-color: black;
+	opacity: 0.7;
+	left:0;
+	top:0;
+	height:100%;
+	width:100%;
+	content: ' ';
+	
+}
