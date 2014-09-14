@@ -14,6 +14,7 @@ img {
 	height: 100%;
 	width: auto;
 	display: block;
+	margin: 0;
 }
 
 .has-nesting {
@@ -28,15 +29,15 @@ img {
 	width: 100%;
 }
 
-.display-inline * {
+.display-inline div {
 	display: inline-block;
 }
 
-.margin-onepx * {
+.margin-onepx div {
 	margin: 1px;
 }
 
-.display-stacked * {
+.display-stacked div {
 	position: absolute;
 	top: 1%;
 }
@@ -45,7 +46,7 @@ img {
 	position: relative;
 }
 
-.display-block * {
+.display-block div {
 	display: block;
 }
 
