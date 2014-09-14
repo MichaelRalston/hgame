@@ -195,7 +195,7 @@ function renderZone(zoneData) {
 	zoneData.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
 		if (entity.nestedEntity) {
-			moveIfNeeded($('#entity-' + entity.nestedEntity + ' .nesting-holder'), $entity)
+			moveIfNeeded($('#entity-' + entity.nestedEntity + '>.nesting-holder'), $entity)
 		} else {
 			moveIfNeeded($zone, $entity);
 		}
