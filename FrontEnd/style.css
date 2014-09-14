@@ -20,6 +20,7 @@ img {
 .has-nesting {
 	z-index: 1;
 	position: relative;
+	overflow: visible;
 }
 
 .nesting-holder {
@@ -30,6 +31,7 @@ img {
 	height: 100%;
 	width: 100%;
 	margin: 0;
+	overflow: visible;
 }
 
 .display-inline div {
