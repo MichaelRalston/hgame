@@ -47,6 +47,8 @@ instance ToJSON CardZone where
 	toJSON (CZTokens) = String $ pack $ "tokens"
 	
 instance FromJSON CardZone where
+	parseJSON (String "tokens") = return $ CZTokens
+	parseJSON (String "gamelog") = return $ CZGamelog
 	parseJSON (String v) = 
 		case (pfx, idx) of
 			(_, Nothing) -> mzero
