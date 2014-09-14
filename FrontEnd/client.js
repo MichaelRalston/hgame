@@ -105,6 +105,9 @@ function entityElement(entityJson) {
 	var $elem = $('#entity-' + entityJson.entityId);
 	if ($elem.length == 0) {
 		$elem = makeEntityElement(entityJson);	
+		entityJson.classes.forEach(function(cn) {
+			$elem.addClass(cn);
+		});
 	}
 	styleEntity($elem, entityJson);
 	return $elem;		
