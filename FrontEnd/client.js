@@ -52,7 +52,7 @@ function makeEntityElement(entityJson) {
 	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
-			var $elem = $('<img class="entity" id="entity-'+entityJson.entityId+'">');
+			var $elem = $('<div class="entity has-nesting" id="entity-'+entityJson.entityId+'"><img><div class="nesting-holder"></div>');
 			makeClickable($elem, entityJson.entityId);
 			makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
 			break;
@@ -94,7 +94,7 @@ function styleEntity($elem, entityJson) {
 			$elem.text(entityJson.display.text)
 			break;
 		case 'image':
-			$elem.attr('src', entityJson.display.uri);
+			$elem.children('img').attr('src', entityJson.display.uri);
 			break;
 		default:
 			break;
@@ -191,7 +191,7 @@ function renderZone(zoneData) {
 	zoneData.entities.forEach(function(entity) {
 		$entity = entityElement(entity);
 		if (entity.nestedEntity) {
-			moveIfNeeded($('#entity-' + entity.nestedEntity), $entity)
+			moveIfNeeded($('#entity-' + entity.nestedEntity + ' .nesting-holder'), $entity)
 		} else {
 			moveIfNeeded($zone, $entity);
 		}
