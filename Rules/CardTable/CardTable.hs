@@ -32,7 +32,7 @@ renderZone
 	-> [(CardEntity, CardEntity)]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t) cards ++ 
-	map (\(card, token) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
+	map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
 	))
 renderZone ConcealAll t p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
 renderZone (ConcealExcept pid) t p cards _ = (CZ t p, (zoneDisplay t p
