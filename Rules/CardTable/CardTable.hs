@@ -92,7 +92,7 @@ renderCard t c@(CECard cardType idx) =
 					CZCodexRow -> 80
 					CZPlaymat -> 95
 					CZCodexHolder -> 95
-		, eEntitiesDropOn = t == CZPlay
+		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
 		, eActive = True
 		, eNestOnEntity = Nothing
