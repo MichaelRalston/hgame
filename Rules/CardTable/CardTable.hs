@@ -35,7 +35,8 @@ makePlaymat pid tokens =
 	]
   where
 	playmatCards =
-		[ CECard "playmat_card" $ pid*100 + 1
+		[ CECard "playmat_card" $ pid*100 + 0
+		, CECard "playmat_card" $ pid*100 + 1
 		, CECard "playmat_card" $ pid*100 + 2
 		, CECard "playmat_card" $ pid*100 + 3
 		, CECard "playmat_card" $ pid*100 + 4
