@@ -66,6 +66,11 @@ img {
 	transform: rotate(180deg);
 }
 
+.stretch-horiz {
+	overflow-x: scroll;
+	overflow-y: visible;
+}
+
 .drophover::after {
 	position:absolute;
 	z-index:3;

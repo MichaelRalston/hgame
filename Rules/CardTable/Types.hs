@@ -20,6 +20,7 @@ data CardTableState = CTS
 	, tables :: [[CardEntity]]
 	, discards :: [[CardEntity]]
 	, subEntities :: [(CardEntity, CardEntity)] -- subentity first, then what it's a subentity of.
+	, codexes :: [[[CardEntity]]]
 	, rng :: StdGen
 	}
 	
@@ -34,6 +35,10 @@ data CardZoneType
 	| CZPlay
 	| CZDeck
 	| CZDiscard
+	| CZCodex
+	| CZCodexRow
+	| CZCodexHolder
+	| CZPlaymat
 	deriving (Show, Eq, Ord, Enum)
 	
 instance ZoneId CardZone
@@ -43,6 +48,10 @@ instance ToJSON CardZone where
 	toJSON (CZ CZPlay idx) = String $ pack $ "play-" ++ show idx
 	toJSON (CZ CZDeck idx) = String $ pack $ "deck-" ++ show idx
 	toJSON (CZ CZDiscard idx) = String $ pack $ "discard-" ++ show idx
+	toJSON (CZ CZCodex idx) = String $ pack $ "codex-" ++ show idx
+	toJSON (CZ CZCodexRow idx) = String $ pack $ "codexrow-" ++ show idx
+	toJSON (CZ CZCodexHolder idx) = String $ pack $ "codexholder-" ++ show idx
+	toJSON (CZ CZPlaymat idx) = String $ pack $ "playmat-" ++ show idx
 	toJSON (CZGamelog) = String $ pack $ "gamelog"
 	toJSON (CZTokens) = String $ pack $ "tokens"
 	
@@ -56,6 +65,10 @@ instance FromJSON CardZone where
 			("play", Just index) -> return $ CZ CZPlay index
 			("deck", Just index) -> return $ CZ CZDeck index
 			("discard", Just index) -> return $ CZ CZDiscard index
+			("codex", Just index) -> return $ CZ CZCodex index
+			("playmat", Just index) -> return $ CZ CZPlaymat index
+			("codexrow", Just index) -> return $ CZ CZCodexRow index
+			("codexholder", Just index) -> return $ CZ CZCodexRow index
 			(_, Just _) -> mzero
 		  where
 			idx = readMaybe $ unpack num
