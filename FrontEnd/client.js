@@ -141,6 +141,7 @@ function makeZone(zoneId, displayData) {
 			return makeZone(zoneId, displayData.display);
 		case "shelf":
 			$zone = $('<div class="zone" id="zone-'+zoneId+'"></div>');
+			$zone.hide();
 			$zone.dialog(
 				{ autoOpen: false
 				});
