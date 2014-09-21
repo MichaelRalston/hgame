@@ -150,6 +150,8 @@ function makeZone(zoneId, displayData) {
 				, modal: true
 				});
 			$('#entity-' + displayData.entity).click(function() {
+				console.log($zone);
+				console.log($zone.dialog());
 				$zone.dialog("open");
 			});
 			break;
