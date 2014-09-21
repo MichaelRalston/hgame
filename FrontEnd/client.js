@@ -149,6 +149,7 @@ function makeZone(zoneId, displayData) {
 				, height: 400
 				, modal: true
 				});
+			console.log('#entity-' + displayData.entity);
 			console.log("Number of linked entities", $('#entity-' + displayData.entity).length);
 			$('#entity-' + displayData.entity).click(function() {
 				$zone.dialog("open");
