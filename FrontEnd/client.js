@@ -110,6 +110,7 @@ function styleEntity($elem, entityJson) {
 }
 
 function entityElement(entityJson) {
+	console.log("Rendering entity", entityJson.entityId);
 	var $elem = $('#entity-' + entityJson.entityId);
 	if ($elem.length == 0) {
 		$elem = makeEntityElement(entityJson);	
@@ -212,6 +213,7 @@ function placeZone($zone, zoneData) {
 }
 
 function renderZone(zoneData) {
+	console.log("Rendering zone", zoneData.zoneId);
 	var $zone = getZone(zoneData);
 	placeZone($zone, zoneData);
 	zoneData.entities.forEach(function(entity) {
