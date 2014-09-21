@@ -158,7 +158,9 @@ function makeZone(zoneId, displayData) {
 		drop: function(event, ui) {
 			if (!$zone.is(ui.draggable.parent())) {
 				var id = ui.draggable.attr('id');
-				sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
+				if (id) {
+					sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
+				}
 			}
 		},
 		tolerance: 'pointer',
@@ -197,6 +199,11 @@ function placeZone($zone, zoneData) {
 		case "nested":
 			$parent = $('#zone-'+zoneData.display.display.zone);			
 			break;
+		case "shelf":
+			$parent = $('body');
+			moveIfNeeded($parent, $zone);
+			$zone.hide();
+			return;
 		default:
 			$parent = $('body');
 			break;
