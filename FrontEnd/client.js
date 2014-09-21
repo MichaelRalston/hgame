@@ -54,13 +54,17 @@ function makeEntityElement(entityJson) {
 	switch (entityJson.display.type) {
 		case 'image':
 			var $elem = $('<div class="entity has-nesting" id="entity-'+entityJson.entityId+'"><img><div class="nesting-holder"></div>');
-			makeClickable($elem, entityJson.entityId);
-			makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
+			if (entityJson.active) {
+				makeClickable($elem, entityJson.entityId);
+				makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
+			}		
 			break;
 		case 'text':
 			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>');
-			makeClickable($elem, entityJson.entityId);
-			makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
+			if (entityJson.active) {
+				makeClickable($elem, entityJson.entityId);
+				makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
+			}
 			break;
 		case 'textInput':
 			var $elem = $('<input class="entity" type="text" id="entity-'+entityJson.entityId+'" />');

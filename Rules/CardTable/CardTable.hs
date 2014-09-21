@@ -20,7 +20,7 @@ renderer (CTS {hands, decks, tables, discards, subEntities, codexes}) pid = Map.
 	tables' = map ($ subEntities) $ zipWith ($) (map (renderZone (Show) CZPlay) [0..]) tables
 	decks' = map ($ []) $ zipWith ($) (map (renderZone (ConcealAll) CZDeck) [0..]) decks
 	hands' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZHand) [0..]) hands
-	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex) [0..]) []
+	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex) [0..]) [[], []]
 	codexrows' = map ($ []) $ zipWith ($) (map (\idx -> renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow idx) [0..]) (concat codexes)
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[]}, []))]
 	playmats' = concatMap ($ subEntities) $ map makePlaymat [0, 1] 
@@ -94,7 +94,10 @@ renderCard t c@(CECard cardType idx) =
 					CZCodexHolder -> 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
-		, eActive = True
+		, eActive = case cardType of
+			"playmat_card" -> False
+			"codex_card" -> False
+			_ -> True
 		, eNestOnEntity = Nothing
 		, eClasses = [] -- TODO: address rotation by 90 degrees.
 		}
