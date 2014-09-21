@@ -66,6 +66,12 @@ img {
 	transform: rotate(180deg);
 }
 
+.rotate90 {
+	-ms-transform: rotate(90deg);
+	-webkit-transform: rotate(90deg);
+	transform: rotate(90deg);
+}
+
 .stretch-horiz {
 	overflow-x: scroll;
 	overflow-y: visible;
