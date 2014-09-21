@@ -53,7 +53,7 @@ function makeEntityElement(entityJson) {
 	console.log("make element", entityJson);
 	switch (entityJson.display.type) {
 		case 'image':
-			var $elem = $('<div class="entity has-nesting" id="entity-'+entityJson.entityId+'"><img><div class="nesting-holder"></div>');
+			var $elem = $('<div class="entity has-nesting" id="entity-'+entityJson.entityId+'"><img><div class="nesting-holder"></div></div>');
 			if (entityJson.active) {
 				makeClickable($elem, entityJson.entityId);
 				makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
@@ -80,6 +80,14 @@ function makeEntityElement(entityJson) {
 }
 
 function styleEntity($elem, entityJson) {
+	$elem[0].className.split(/\s+/).forEach(function(cl) {
+		if (cl != 'entity' && cl != 'has-nesting') {
+			$elem.removeClass(cl);
+		}
+	}
+	entityJson.classes.forEach(function(cn) {
+		$elem.addClass(cn);
+	});
 	switch (entityJson.size.type) {
 		case "percent":
 			$elem.width(entityJson.size.width+"%");
@@ -107,6 +115,7 @@ function styleEntity($elem, entityJson) {
 		default:
 			break;
 	}
+
 }
 
 function entityElement(entityJson) {
@@ -114,9 +123,6 @@ function entityElement(entityJson) {
 	var $elem = $('#entity-' + entityJson.entityId);
 	if ($elem.length == 0) {
 		$elem = makeEntityElement(entityJson);	
-		entityJson.classes.forEach(function(cn) {
-			$elem.addClass(cn);
-		});
 	}
 	styleEntity($elem, entityJson);
 	return $elem;		
