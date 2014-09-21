@@ -125,7 +125,7 @@ zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), or
 zoneDisplay CZPlaymat pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+4, classNames = []}
 zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+5, classNames = []}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"]}
-zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CESubEntity "codex_card" pid, order=pid*20+4, classNames = []}
+zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard "codex_card" pid, order=pid*20+4, classNames = []}
 zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 5, classNames = ["display-inline", "margin-onepx", "stretch-horiz"]}
 
 
