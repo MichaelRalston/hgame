@@ -150,11 +150,7 @@ function makeZone(zoneId, displayData) {
 				, height: 400
 				, modal: true
 				});
-			console.log("binding dialog for ",$zone.attr('id'));
 			$('#entity-' + displayData.entity).click(function() {
-				console.log("opening dialog for ",$zone.attr('id'));
-				console.log($zone);
-				console.log($zone.dialog());
 				$zone.dialog("open");
 			});
 			break;
