@@ -139,6 +139,14 @@ function makeZone(zoneId, displayData) {
 			break;
 		case "nested":
 			return makeZone(zoneId, displayData.display);
+		case "shelf":
+			$zone = $('<div class="zone" id="zone-'+zoneId+'"></div>');
+			$zone.dialog(
+				{ autoOpen: false
+				});
+			$('#entity-' + displayData.entity).click(function() {
+				$zone.dialog("open");
+			});
 		default: // todo: implement.
 			alert("Unimplemented zone type " + displayData.type);
 			$zone = $('#id_that_does_not_exist_ever');			
