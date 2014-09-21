@@ -200,9 +200,6 @@ function placeZone($zone, zoneData) {
 			$parent = $('#zone-'+zoneData.display.display.zone);			
 			break;
 		case "shelf":
-			$parent = $('body');
-			moveIfNeeded($parent, $zone);
-			$zone.hide();
 			return;
 		default:
 			$parent = $('body');
