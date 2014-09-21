@@ -84,7 +84,7 @@ function styleEntity($elem, entityJson) {
 		if (cl != 'entity' && cl != 'has-nesting') {
 			$elem.removeClass(cl);
 		}
-	}
+	});
 	entityJson.classes.forEach(function(cn) {
 		$elem.addClass(cn);
 	});
