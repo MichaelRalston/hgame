@@ -21,6 +21,7 @@ data CardTableState = CTS
 	, discards :: [[CardEntity]]
 	, subEntities :: [(CardEntity, CardEntity)] -- subentity first, then what it's a subentity of.
 	, codexes :: [[[CardEntity]]]
+	, exhaustedCards :: [CardEntity]
 	, rng :: StdGen
 	}
 	

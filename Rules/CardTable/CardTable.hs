@@ -12,16 +12,26 @@ import Safe (atMay)
 import System.Random (randomR)
 import Data.List (delete)
 
+{- TODO LIST:
+	- Buttons to populate your codex with specs. (don't allow repeating a spec, don't allow going past 3, the first one sets your starting deck.)
+	- Make cards have actual types; preferably a sum type of specs+utilities. Maybe leave the int alone?
+	- Make cards and subentities different actual types that are both sharing a typeclass; they should be kinda split on some things so that warnings are useful.
+	- Clicking an in-play card should tap/untap it. Also, figure out how to tap cards.
+	- Real images!
+	- Clicking on a codex card should put it into your discard.
+	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
+-}
+
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
-renderer (CTS {hands, decks, tables, discards, subEntities, codexes}) pid = Map.fromList (tokens ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
+renderer (CTS {hands, decks, tables, discards, subEntities, codexes, exhaustedCards}) pid = Map.fromList (tokens ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
   where
 	tokens = [(CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}, map (renderToken Nothing) [CESubEntity "gold" 0, CESubEntity "plusone" 0, CESubEntity "minusone" 0, CESubEntity "time" 0, CESubEntity "sword" 0]))]
-	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard) [0..]) discards
-	tables' = map ($ subEntities) $ zipWith ($) (map (renderZone (Show) CZPlay) [0..]) tables
-	decks' = map ($ []) $ zipWith ($) (map (renderZone (ConcealAll) CZDeck) [0..]) decks
-	hands' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZHand) [0..]) hands
-	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex) [0..]) [[], []]
-	codexrows' = map ($ []) $ zipWith ($) (map (\idx -> renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow idx) [0..]) (concat codexes)
+	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
+	tables' = map ($ subEntities) $ zipWith ($) (map (renderZone (Show) CZPlay exhaustedCards) [0..]) tables
+	decks' = map ($ []) $ zipWith ($) (map (renderZone (ConcealAll) CZDeck []) [0..]) decks
+	hands' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZHand []) [0..]) hands
+	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex []) [0..]) [[], []]
+	codexrows' = map ($ []) $ zipWith ($) (map (\idx -> renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx) [0..]) (concat codexes)
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[]}, []))]
 	playmats' = concatMap ($ subEntities) $ map makePlaymat [0, 1] 
 
@@ -29,8 +39,8 @@ data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	
 makePlaymat :: PlayerIndex -> [(CardEntity, CardEntity)] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens =
-	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat $ CECard "codex_card" pid) {eSize = SESPercent 100 10}]))
-	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat) playmatCards ++ 
+	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ CECard "codex_card" pid) {eSize = SESPercent 100 10}]))
+	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) playmatCards ++ 
 		map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card playmatCards) tokens)))
 	]
   where
@@ -51,20 +61,21 @@ makePlaymat pid tokens =
 renderZone
 	:: RenderType
 	-> CardZoneType
+	-> [CardEntity]
 	-> PlayerIndex -- controller of the zone in question.
 	-> [CardEntity]
 	-> [(CardEntity, CardEntity)]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
-renderZone Show t p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t) cards ++ 
+renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t exhaustedCards) cards ++ 
 	map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
 	))
-renderZone ConcealAll t p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
-renderZone (ConcealExcept pid) t p cards _ = (CZ t p, (zoneDisplay t p
-	, (if pid == p then (map (renderCard t) cards) else [cardCounter p t (length cards)])
+renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
+renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
+	, (if pid == p then (map (renderCard t []) cards) else [cardCounter p t (length cards)])
 	))
 
-renderCard :: CardZoneType -> CardEntity -> ScreenEntity CardEntity
-renderCard t c@(CECard cardType idx) =
+renderCard :: CardZoneType -> [CardEntity] -> CardEntity -> ScreenEntity CardEntity
+renderCard t exhaustedCards c@(CECard cardType idx)  =
 	SE
 		{ eId = c
 		, eDisplay = SDImage "images/placeholder.jpg"
@@ -81,6 +92,7 @@ renderCard t c@(CECard cardType idx) =
 					7 -> SESPercent 33 33
 					8 -> SESPercent 33 33
 					9 -> SESPercent 25 95
+					_ -> SESPercent 20 95
 			else
 				SESAutoWidth $ 
 				case t of 
@@ -99,7 +111,7 @@ renderCard t c@(CECard cardType idx) =
 			"codex_card" -> False
 			_ -> True
 		, eNestOnEntity = Nothing
-		, eClasses = [] -- TODO: address rotation by 90 degrees.
+		, eClasses = if c `elem` exhaustedCards then ["rotate90"] else []
 		}
 
 renderToken :: Maybe CardEntity -> CardEntity -> ScreenEntity CardEntity
@@ -141,7 +153,12 @@ inputHandler s _ (UIClick (CECard "blank" bidx)) = return $ processClick s (toEn
 inputHandler s _ (UIDrag (CECard "blank" _) _) = return (s, [], [])
 inputHandler s pid (UIDrag card@(CECard _ _) zone) = return (moveCard s card zone, moveCardDisplay s pid card zone, [])
 inputHandler s pid (UIDrag se@(CESubEntity _ _) zone) = return (removeSubEntity s se, moveCardDisplay s pid se zone, [])
-inputHandler s _ (UIClick (CECard _ _)) = return (s, [], []) -- TODO: tap/untap?
+inputHandler s@(CTS{exhaustedCards}) pid (UIClick card@(CECard _ _)) = return $ if inPlay s card
+	then ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
+		 , [GLBroadcast [GLMPlayerAction pid ((if card `elem` exhaustedCards then "readied " else "exhausted ") ++ nameCard card) CZGamelog]]
+		 , []
+		 )
+	else (s, [], [])
 inputHandler s _ (UIClick (CESubEntity _ _)) = return (s, [], []) -- TODO: click on the underlying?
 inputHandler s _ (UIDragEntity _ (CESubEntity _ _)) = return (s, [], []) -- TODO: pass to the underlying?
 inputHandler s pid (UIDragEntity entity card@(CECard cardtype _)) = return $ if inPlay s card || cardtype == "playmat_card"
@@ -183,7 +200,7 @@ deleteCard s card = s
 	}
 	
 removeSubEntitiesForCard :: CardTableState -> CardEntity -> CardTableState
-removeSubEntitiesForCard s card = s { subEntities = filter ((/= card) . snd) $ subEntities s }
+removeSubEntitiesForCard s card = s { subEntities = filter ((/= card) . snd) $ subEntities s, exhaustedCards = delete card $ exhaustedCards s }
 	
 insertForIdx :: [[a]] -> Int -> a -> [[a]]
 insertForIdx list idx updater = take idx list ++ [(updater:(head $ drop idx list))] ++ drop (idx+1) list
@@ -219,6 +236,7 @@ makeCardTable generator = do
 		, discards = [[],[]]
 		, subEntities = []
 		, codexes = [[[], [], []], [[], [], []]]
+		, exhaustedCards = []
 		, rng = generator
 		}		
 	return Game
