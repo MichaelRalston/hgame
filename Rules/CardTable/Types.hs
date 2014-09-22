@@ -14,8 +14,6 @@ module Rules.CardTable.Types
 	, UtilityCardType (..)
 	, CardIdentifier (..)
 	, SDCardType (..)
-	, makeEncodable
-	, runQ
 	) where
 	
 import Engine.Types
@@ -24,9 +22,8 @@ import Data.Text (pack, unpack, breakOn, breakOnEnd, drop, Text, append)
 import Text.Read (readMaybe)
 import Control.Monad (mzero)
 import System.Random (StdGen)
-import Control.Applicative ((<*>), (<$>))
+import Control.Applicative ((<$>))
 import Rules.CardTable.TypesGenerators
-import Language.Haskell.TH (runQ)
 
 data CardTableState = CTS
 	{ hands :: [[Card]]
@@ -106,11 +103,31 @@ data CardSpec
 	| Anarchy
 	| Blood
 	| Fire
+	| Balance
+	| Feral
+	| Growth
+	| Law
+	| Peace
+	| Truth
+	| Past
+	| Present
+	| Future
+	| Discipline
+	| Ninjitsu
+	| Strength
+	| Disease
+	| Necromancy
+	| Demonology
 	deriving (Eq, Show)
 	
 data CardColor
 	= NeutralColor
 	| Red
+	| Green
+	| Blue
+	| Purple
+	| White
+	| Black
 	deriving (Eq, Show)
 	
 data CardType
@@ -174,22 +191,47 @@ class Encodable a where
 	encode :: a -> Text
 	decode :: Text -> Maybe a
 	
-
-instance Encodable CardSpec where
-	encode NeutralSpec = "neutral"
-	encode Anarchy = "anarchy"
-	encode Blood = "blood"
-	encode Fire = "fire"	
-	decode "neutral" = Just NeutralSpec
-	-- decode _ = Nothing
+makeEncodable ''CardSpec
+	[ ('NeutralSpec, "neutral")
+	, ('Anarchy, "anarchy")
+	, ('Blood, "blood")
+	, ('Fire, "fire")
+	, ('Balance, "balance")
+	, ('Feral, "feral")
+	, ('Growth, "growth")
+	, ('Law, "law")
+	, ('Peace, "peace")
+	, ('Truth, "truth")
+	, ('Past, "past")
+	, ('Present, "present")
+	, ('Future, "future")
+	, ('Discipline, "discipline")
+	, ('Ninjitsu, "ninjitsu")
+	, ('Strength, "strength")
+	, ('Disease, "disease")
+	, ('Necromancy, "necromancy")
+	, ('Demonology, "demonology")
+	]
 	
 instance Encodable CardIndex where
 	encode (CI i) = pack $ show i
 	decode s = CI <$> (readMaybe $ unpack s)
 	
-instance Encodable CardType where
-	encode Hero = "hero"
-	decode "hero" = Just Hero
+makeEncodable ''CardType
+	[ ('Hero, "hero")
+	, ('Spell_1, "spell1")
+	, ('Spell_2, "spell2")
+	, ('Spell_3, "spell3")
+	, ('Spell_Ult, "spellult")
+	, ('Tech_1_1, "tech11")
+	, ('Tech_1_2, "tech12")
+	, ('Tech_2_1, "tech21")
+	, ('Tech_2_2, "tech22")
+	, ('Tech_2_3, "tech23")
+	, ('Tech_2_4, "tech24")
+	, ('Tech_2_5, "tech25")
+	, ('Tech_3, "tech3")
+	]
 	
 makeEncodable ''SDCardType
 	[ ('SDCard0, "sdcard0")
@@ -204,13 +246,33 @@ makeEncodable ''SDCardType
 	, ('SDCard9, "sdcard9")
 	]
 	
-instance Encodable CardColor where
-	encode NeutralColor = "neutral"
-	decode "neutral" = Just NeutralColor
+makeEncodable ''CardColor
+	[ ('NeutralColor, "neutral")
+	, ('Red, "red")
+	, ('Blue, "blue")
+	, ('Green, "green")
+	, ('Purple, "purple")
+	, ('White, "white")
+	, ('Black, "black")
+	]
 	
-instance Encodable UtilityCardType where
-	encode CodexHolder = "codex"
-	decode "codex" = Just CodexHolder
+makeEncodable ''UtilityCardType
+	[ ('CodexHolder, "codex")
+	, ('Hero_1_Holder, "hero1")
+	, ('Hero_2_Holder, "hero2")
+	, ('Hero_3_Holder, "hero3")
+	, ('Tech_3_1_Building, "tech31")
+	, ('Tech_3_2_Building, "tech32")
+	, ('Tech_3_3_Building, "tech33")
+	, ('Tech_2_1_Building, "tech21")
+	, ('Tech_2_2_Building, "tech22")
+	, ('Tech_2_3_Building, "tech23")
+	, ('SurplusBuilding, "surplus")
+	, ('Tech_1_Building, "tech1")
+	, ('TowerBuilding, "tower")
+	, ('BaseBuilding, "base")
+	, ('BlankCard, "blank")
+	]
 	
 instance ToJSON CardEntity where
 	toJSON (CECard (Card (CodexCard spec rank) idx)) = String $ "codexcard-" `append` encode spec `append` "-" `append` encode rank `append` "-" `append` encode idx
