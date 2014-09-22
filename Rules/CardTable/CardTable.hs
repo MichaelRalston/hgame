@@ -18,6 +18,8 @@ import Control.Applicative ((<$>))
 	- Real images!
 	- Clicking on a codex card should put it into your discard.
 	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
+	- Hero zone.
+	- Worker zone.
 -}
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
