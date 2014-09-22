@@ -176,12 +176,11 @@ class Encodable a where
 	
 
 instance Encodable CardSpec where
-makeEncodable NeutralSpec "neutral"
---	encode NeutralSpec = "neutral"
---	decode "neutral" = Just NeutralSpec
+	encode NeutralSpec = "neutral"
 	encode Anarchy = "anarchy"
 	encode Blood = "blood"
 	encode Fire = "fire"	
+	decode "neutral" = Just NeutralSpec
 	-- decode _ = Nothing
 	
 instance Encodable CardIndex where
@@ -192,9 +191,18 @@ instance Encodable CardType where
 	encode Hero = "hero"
 	decode "hero" = Just Hero
 	
-instance Encodable SDCardType where
-	encode SDCard0 = "sdcard0"
-	decode "sdcard0" = Just SDCard0
+makeEncodable ''SDCardType
+	[ ('SDCard0, "sdcard0")
+	, ('SDCard1, "sdcard1")
+	, ('SDCard2, "sdcard2")
+	, ('SDCard3, "sdcard3")
+	, ('SDCard4, "sdcard4")
+	, ('SDCard5, "sdcard5")
+	, ('SDCard6, "sdcard6")
+	, ('SDCard7, "sdcard7")
+	, ('SDCard8, "sdcard8")
+	, ('SDCard9, "sdcard9")
+	]
 	
 instance Encodable CardColor where
 	encode NeutralColor = "neutral"
