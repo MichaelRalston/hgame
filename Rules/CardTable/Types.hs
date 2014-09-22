@@ -5,6 +5,10 @@ module Rules.CardTable.Types
 	, CardTableState (..)
 	, CardEntity (..)
 	, CardZoneType (..)
+	, Card (..)
+	, Token (..)
+	, TokenIndex (..)
+	, CardIndex (..)
 	) where
 	
 import Engine.Types
@@ -15,13 +19,13 @@ import Control.Monad (mzero)
 import System.Random (StdGen)
 
 data CardTableState = CTS
-	{ hands :: [[CardEntity]]
-	, decks :: [[CardEntity]]
-	, tables :: [[CardEntity]]
-	, discards :: [[CardEntity]]
-	, subEntities :: [(CardEntity, CardEntity)] -- subentity first, then what it's a subentity of.
-	, codexes :: [[[CardEntity]]]
-	, exhaustedCards :: [CardEntity]
+	{ hands :: [[Card]]
+	, decks :: [[Card]]
+	, tables :: [[Card]]
+	, discards :: [[Card]]
+	, tokens :: [(Token, Card)]
+	, codexes :: [[[Card]]]
+	, exhaustedCards :: [Card]
 	, rng :: StdGen
 	}
 	
@@ -77,29 +81,38 @@ instance FromJSON CardZone where
 			(pfx, rst) = breakOn "-" v
 	parseJSON _ = mzero
 	
+data CardIndex = CI Int deriving (Show, Eq)
+data TokenIndex = TI Int deriving (Show, Eq)
+
 data CardEntity
-	= CECard String Int -- suit, "rank"
-	| CESubEntity String Int -- String for type? Int for 'index'. index 0 is the special global one.
-	deriving (Show, Eq)
-	
+	= CECard Card
+	| CEToken Token
+	deriving (Eq, Show)
+
 instance EntityId CardEntity
 	
+data Card = Card String CardIndex -- suit, "rank"
+	deriving (Show, Eq)
+data Token = Token String TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
+	deriving (Show, Eq)
+	
 instance ToJSON CardEntity where
-	toJSON (CECard suit rank) = String $ pack $ "card-" ++ suit ++ "-" ++ show rank
-	toJSON (CESubEntity setype idx) = String $ pack $ "subentity-" ++ setype ++ "-" ++ show idx
+	toJSON (CECard (Card suit rank)) = String $ pack $ "card-" ++ suit ++ "-" ++ show rank
+	toJSON (CEToken (Token setype idx)) = String $ pack $ "token-" ++ setype ++ "-" ++ show idx
 	
 instance FromJSON CardEntity where
 	parseJSON (String v) =
 		case entityType of
 			"card" -> case rnk of
-				Just rank -> return $ CECard (unpack suit) rank
+				Just rank -> return $ CECard $ Card (unpack suit) (CI rank)
 				Nothing -> mzero
 			  where
 				rnk = readMaybe $ unpack num
 				(_, num) = breakOnEnd "-" rest
 				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
-			"subentity" -> case idx of
-				Just index -> return $ CESubEntity (unpack setype) index
+			_ -> mzero
+			"token" -> case idx of
+				Just index -> return $ CEToken $ Token (unpack setype) (TI index)
 				Nothing -> mzero
 			  where
 				idx = readMaybe $ unpack num
