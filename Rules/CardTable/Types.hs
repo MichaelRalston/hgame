@@ -1,4 +1,4 @@
-{-# LANGUAGE NamedFieldPuns, OverloadedStrings #-}
+{-# LANGUAGE NamedFieldPuns, OverloadedStrings, TemplateHaskell #-}
 
 module Rules.CardTable.Types
 	( CardZone(..)
@@ -9,14 +9,24 @@ module Rules.CardTable.Types
 	, Token (..)
 	, TokenIndex (..)
 	, CardIndex (..)
+	, CardSpec (..)
+	, CardColor (..)
+	, UtilityCardType (..)
+	, CardIdentifier (..)
+	, SDCardType (..)
+	, makeEncodable
+	, runQ
 	) where
 	
 import Engine.Types
 import Data.Aeson (ToJSON, FromJSON, Value(..), parseJSON)
-import Data.Text (pack, unpack, breakOn, breakOnEnd, drop)
+import Data.Text (pack, unpack, breakOn, breakOnEnd, drop, Text, append)
 import Text.Read (readMaybe)
 import Control.Monad (mzero)
 import System.Random (StdGen)
+import Control.Applicative ((<*>), (<$>))
+import Rules.CardTable.TypesGenerators
+import Language.Haskell.TH (runQ)
 
 data CardTableState = CTS
 	{ hands :: [[Card]]
@@ -90,27 +100,142 @@ data CardEntity
 	deriving (Eq, Show)
 
 instance EntityId CardEntity
+
+data CardSpec
+	= NeutralSpec
+	| Anarchy
+	| Blood
+	| Fire
+	deriving (Eq, Show)
 	
-data Card = Card String CardIndex -- suit, "rank"
+data CardColor
+	= NeutralColor
+	| Red
+	deriving (Eq, Show)
+	
+data CardType
+	= Hero
+	| Spell_1
+	| Spell_2
+	| Spell_3
+	| Spell_Ult
+	| Tech_1_1
+	| Tech_1_2
+	| Tech_2_1
+	| Tech_2_2
+	| Tech_2_3
+	| Tech_2_4
+	| Tech_2_5
+	| Tech_3
+	deriving (Eq, Show)
+
+data UtilityCardType
+	= CodexHolder
+	| Hero_1_Holder
+	| Hero_2_Holder
+	| Hero_3_Holder
+	| Tech_3_1_Building
+	| Tech_3_2_Building
+	| Tech_3_3_Building
+	| Tech_2_1_Building
+	| Tech_2_2_Building
+	| Tech_2_3_Building
+	| SurplusBuilding
+	| Tech_1_Building
+	| TowerBuilding
+	| BaseBuilding
+	| BlankCard
+	deriving (Eq, Show)
+	
+data SDCardType
+	= SDCard0
+	| SDCard1
+	| SDCard2
+	| SDCard3
+	| SDCard4
+	| SDCard5
+	| SDCard6
+	| SDCard7
+	| SDCard8
+	| SDCard9
+	deriving (Eq, Show)
+	
+data Card = Card CardIdentifier CardIndex
+	deriving (Show, Eq)
+data CardIdentifier
+	= CodexCard CardSpec CardType
+	| UtilityCard UtilityCardType
+	| SDCard CardColor SDCardType
 	deriving (Show, Eq)
 data Token = Token String TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
 	deriving (Show, Eq)
+
+class Encodable a where
+	encode :: a -> Text
+	decode :: Text -> Maybe a
+	
+
+instance Encodable CardSpec where
+makeEncodable NeutralSpec "neutral"
+--	encode NeutralSpec = "neutral"
+--	decode "neutral" = Just NeutralSpec
+	encode Anarchy = "anarchy"
+	encode Blood = "blood"
+	encode Fire = "fire"	
+	-- decode _ = Nothing
+	
+instance Encodable CardIndex where
+	encode (CI i) = pack $ show i
+	decode s = CI <$> (readMaybe $ unpack s)
+	
+instance Encodable CardType where
+	encode Hero = "hero"
+	decode "hero" = Just Hero
+	
+instance Encodable SDCardType where
+	encode SDCard0 = "sdcard0"
+	decode "sdcard0" = Just SDCard0
+	
+instance Encodable CardColor where
+	encode NeutralColor = "neutral"
+	decode "neutral" = Just NeutralColor
+	
+instance Encodable UtilityCardType where
+	encode CodexHolder = "codex"
+	decode "codex" = Just CodexHolder
 	
 instance ToJSON CardEntity where
-	toJSON (CECard (Card suit rank)) = String $ pack $ "card-" ++ suit ++ "-" ++ show rank
+	toJSON (CECard (Card (CodexCard spec rank) idx)) = String $ "codexcard-" `append` encode spec `append` "-" `append` encode rank `append` "-" `append` encode idx
+	toJSON (CECard (Card (UtilityCard uct) idx)) = String $ "utility-" `append` encode uct `append` "-" `append` encode idx
+	toJSON (CECard (Card (SDCard color sdtype) idx)) = String $ "sdcard-" `append` encode color `append` "-" `append` encode sdtype `append` "-" `append` encode idx
 	toJSON (CEToken (Token setype idx)) = String $ pack $ "token-" ++ setype ++ "-" ++ show idx
 	
 instance FromJSON CardEntity where
 	parseJSON (String v) =
 		case entityType of
-			"card" -> case rnk of
-				Just rank -> return $ CECard $ Card (unpack suit) (CI rank)
-				Nothing -> mzero
+			"codexcard" -> case (idx, decode rnk, decode suit) of
+				(Just index, Just rank, Just suit') -> return $ CECard $ Card (CodexCard suit' rank) (CI index)
+				_ -> mzero
 			  where
-				rnk = readMaybe $ unpack num
+				idx = readMaybe $ unpack num
+				(rnk, _) = breakOn "-" $ Data.Text.drop 1 $ rest
 				(_, num) = breakOnEnd "-" rest
 				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
-			_ -> mzero
+			"sdcard" -> case (idx, decode rnk, decode suit) of
+				(Just index, Just rank, Just suit') -> return $ CECard $ Card (SDCard suit' rank) (CI index)
+				_ -> mzero
+			  where
+				idx = readMaybe $ unpack num
+				(rnk, _) = breakOn "-" $ Data.Text.drop 1 $ rest
+				(_, num) = breakOnEnd "-" rest
+				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
+			"utility" -> case (idx, decode suit) of
+				(Just index, Just suit') -> return $ CECard $ Card (UtilityCard suit') (CI index)
+				_ -> mzero
+			  where
+				idx = readMaybe $ unpack num
+				(_, num) = breakOnEnd "-" rest
+				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
 			"token" -> case idx of
 				Just index -> return $ CEToken $ Token (unpack setype) (TI index)
 				Nothing -> mzero

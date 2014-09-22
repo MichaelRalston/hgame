@@ -15,8 +15,6 @@ import Control.Applicative ((<$>))
 
 {- TODO LIST:
 	- Buttons to populate your codex with specs. (don't allow repeating a spec, don't allow going past 3, the first one sets your starting deck.)
-	- Make cards have actual types; preferably a sum type of specs+utilities. Maybe leave the int alone?
-	- Make cards and tokens different actual types that are both sharing a typeclass; they should be kinda split on some things so that warnings are useful.
 	- Real images!
 	- Clicking on a codex card should put it into your discard.
 	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
@@ -39,22 +37,22 @@ data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	
 makePlaymat :: PlayerIndex -> [(Token, Card)] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens =
-	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card "codex_card" $ CI pid) {eSize = SESPercent 100 10}]))
+	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card (UtilityCard CodexHolder) $ CI pid) {eSize = SESPercent 100 10}]))
 	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) playmatCards ++ 
 		map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card playmatCards) tokens)))
 	]
   where
 	playmatCards =
-		[ Card "playmat_card" $ CI $ pid*100 + 0
-		, Card "playmat_card" $ CI $ pid*100 + 1
-		, Card "playmat_card" $ CI $ pid*100 + 2
-		, Card "playmat_card" $ CI $ pid*100 + 3
-		, Card "playmat_card" $ CI $ pid*100 + 4
-		, Card "playmat_card" $ CI $ pid*100 + 5
-		, Card "playmat_card" $ CI $ pid*100 + 6
-		, Card "playmat_card" $ CI $ pid*100 + 7
-		, Card "playmat_card" $ CI $ pid*100 + 8
-		, Card "playmat_card" $ CI $ pid*100 + 9
+		[ Card (UtilityCard Tech_3_1_Building) $ CI pid
+		, Card (UtilityCard Tech_3_2_Building) $ CI pid
+		, Card (UtilityCard Tech_3_3_Building) $ CI pid
+		, Card (UtilityCard Tech_2_1_Building) $ CI pid
+		, Card (UtilityCard Tech_2_2_Building) $ CI pid
+		, Card (UtilityCard Tech_2_3_Building) $ CI pid
+		, Card (UtilityCard SurplusBuilding) $ CI pid
+		, Card (UtilityCard Tech_1_Building) $ CI pid
+		, Card (UtilityCard TowerBuilding) $ CI pid
+		, Card (UtilityCard BaseBuilding) $ CI pid
 		]
 	
 	
@@ -75,25 +73,25 @@ renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
 	))
 
 renderCard :: CardZoneType -> [Card] -> Card -> ScreenEntity CardEntity
-renderCard t exhaustedCards c@(Card cardType (CI idx))  =
+renderCard t exhaustedCards c@(Card cardType _)  =
 	SE
 		{ eId = CECard c
 		, eDisplay = SDImage "images/placeholder.jpg"
-		, eSize = if cardType == "playmat_card"
-			then
-				case idx `mod` 100 of
-					0 -> SESPercent 20 33
-					1 -> SESPercent 20 33
-					2 -> SESPercent 20 33
-					3 -> SESPercent 20 33
-					4 -> SESPercent 20 33
-					5 -> SESPercent 20 33
-					6 -> SESPercent 33 33
-					7 -> SESPercent 33 33
-					8 -> SESPercent 33 33
-					9 -> SESPercent 25 95
-					_ -> SESPercent 20 95
-			else
+		, eSize = case cardType of
+			UtilityCard Hero_1_Holder -> SESPercent 95 33
+			UtilityCard Hero_2_Holder -> SESPercent 95 33
+			UtilityCard Hero_3_Holder -> SESPercent 95 33
+			UtilityCard Tech_3_1_Building -> SESPercent 20 33
+			UtilityCard Tech_3_2_Building -> SESPercent 20 33
+			UtilityCard Tech_3_3_Building -> SESPercent 20 33
+			UtilityCard Tech_2_1_Building -> SESPercent 20 33
+			UtilityCard Tech_2_2_Building -> SESPercent 20 33
+			UtilityCard Tech_2_3_Building -> SESPercent 20 33
+			UtilityCard SurplusBuilding -> SESPercent 33 33
+			UtilityCard Tech_1_Building -> SESPercent 33 33
+			UtilityCard TowerBuilding -> SESPercent 33 33
+			UtilityCard BaseBuilding -> SESPercent 25 95
+			_ ->
 				SESAutoWidth $ 
 				case t of 
 					CZHand -> 95
@@ -107,8 +105,8 @@ renderCard t exhaustedCards c@(Card cardType (CI idx))  =
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
 		, eActive = case cardType of
-			"playmat_card" -> False
-			"codex_card" -> False
+			UtilityCard BlankCard -> True
+			UtilityCard _ -> False
 			_ -> True
 		, eNestOnEntity = Nothing
 		, eClasses = if c `elem` exhaustedCards then ["rotate90"] else []
@@ -128,7 +126,7 @@ renderToken card token =
 		}
 		
 cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
-cardCounter p t count = SE { eId = CECard $ Card "blank" $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
+cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+6, classNames = ["margin-onepx", "bordered"]}
@@ -137,7 +135,7 @@ zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), or
 zoneDisplay CZPlaymat pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+4, classNames = []}
 zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+5, classNames = []}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"]}
-zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card "codex_card" $ CI pid, order=pid*20+6, classNames = []}
+zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card (UtilityCard CodexHolder) $ CI pid, order=pid*20+6, classNames = []}
 zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 7, classNames = ["display-inline", "margin-onepx", "stretch-horiz"]}
 
 
@@ -152,21 +150,24 @@ nameZone zone = show zone
 
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
-inputHandler s _ (UIClick (CECard (Card "blank" (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
-inputHandler s _ (UIDrag (CECard (Card "blank" _)) _) = return (s, [], [])
-inputHandler s pid (UIDrag cardEntity@(CECard card@(Card _ _)) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
-inputHandler s pid (UIDrag ce@(CEToken token@(Token _ _)) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
-inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card@(Card _ _))) = return $ if inPlay s card
+inputHandler s _ (UIClick (CECard (Card (UtilityCard BlankCard) (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
+inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
+inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
+inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ if inPlay s card
 	then ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
 		 , [GLBroadcast [GLMPlayerAction pid ((if card `elem` exhaustedCards then "readied " else "exhausted ") ++ nameCard card) CZGamelog]]
 		 , []
 		 )
 	else (s, [], [])
-inputHandler s _ (UIClick (CEToken (Token _ _))) = return (s, [], []) -- TODO: click on the underlying?
+inputHandler s _ (UIClick (CEToken _)) = return (s, [], []) -- TODO: click on the underlying?
 inputHandler s _ (UIDragEntity _ (CEToken _)) = return (s, [], []) -- TODO: pass to the underlying?
-inputHandler s pid (UIDragEntity (CEToken entity) (CECard card@(Card cardtype _))) = return $ if inPlay s card || cardtype == "playmat_card"
+inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if inPlay s card
 	then (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
 	else (s, [], [])
+inputHandler s _ (UIDragEntity (CEToken _) (CECard (Card (UtilityCard CodexHolder) _))) = return (s, [], [])
+inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
+inputHandler s _ (UIDragEntity (CECard _) (CECard _)) = return (s, [], [])
 	
 newToken :: CardTableState -> Token -> Token
 newToken s (Token subEntityType (TI 0)) = head $ filter (\se -> all ((/= se) . fst) $ tokens s) $ map (Token subEntityType) $ map TI [1..]
@@ -190,8 +191,7 @@ inPlay :: CardTableState -> Card -> Bool
 inPlay s card = True `elem` map (elem card) (tables s)
 
 moveCard :: CardTableState -> Card -> CardZone -> CardTableState
-moveCard s (Card "codex_card" _) _ = s
-moveCard s (Card "playmat_card" _) _ = s
+moveCard s (Card (UtilityCard _) _) _ = s
 moveCard s card (CZ CZHand idx) = (removeSubEntitiesForCard (deleteCard s card) card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
 moveCard s card (CZ CZDeck idx) = (removeSubEntitiesForCard (deleteCard s card) card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
 moveCard s card (CZ CZDiscard idx) = (removeSubEntitiesForCard (deleteCard s card) card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
@@ -235,7 +235,7 @@ shuffle a r = (element:rest, r')
 	
 makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
-	let deck = [Card suit (CI rank) | suit <- ["red", "blue", "purple", "yellow"], rank <- [1..15]]
+	let deck = []
 	tableState <- alloc $ CTS
 		{ hands = [[],[]]
 		, decks = [deck,[]]
