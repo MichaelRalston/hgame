@@ -144,6 +144,7 @@ data CardType
 	| Tech_2_4
 	| Tech_2_5
 	| Tech_3
+	| SpecToken
 	deriving (Eq, Show)
 
 data UtilityCardType
@@ -177,6 +178,15 @@ data SDCardType
 	| SDCard9
 	deriving (Eq, Show)
 	
+data TokenType
+	= Gold
+	| PlusOne
+	| MinusOne
+	| Time
+	| Cooldown
+	| Sword
+	deriving (Eq, Show)
+	
 data Card = Card CardIdentifier CardIndex
 	deriving (Show, Eq)
 data CardIdentifier
@@ -184,7 +194,7 @@ data CardIdentifier
 	| UtilityCard UtilityCardType
 	| SDCard CardColor SDCardType
 	deriving (Show, Eq)
-data Token = Token String TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
+data Token = Token TokenType TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
 	deriving (Show, Eq)
 
 class Encodable a where
@@ -231,6 +241,7 @@ makeEncodable ''CardType
 	, ('Tech_2_4, "tech24")
 	, ('Tech_2_5, "tech25")
 	, ('Tech_3, "tech3")
+	, ('SpecToken, "spec")
 	]
 	
 makeEncodable ''SDCardType
@@ -272,6 +283,15 @@ makeEncodable ''UtilityCardType
 	, ('TowerBuilding, "tower")
 	, ('BaseBuilding, "base")
 	, ('BlankCard, "blank")
+	]
+	
+makeEncodable ''TokenType
+	[ ('Gold, "gold")
+	, ('PlusOne, "plus")
+	, ('MinusOne, "minus")
+	, ('Time, "time")
+	, ('Cooldown, "cooldown")
+	, ('Sword, "sword")
 	]
 	
 instance ToJSON CardEntity where
