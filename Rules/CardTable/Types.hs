@@ -11,6 +11,7 @@ module Rules.CardTable.Types
 	, CardIndex (..)
 	, CardSpec (..)
 	, CardColor (..)
+	, TokenType (..)
 	, UtilityCardType (..)
 	, CardIdentifier (..)
 	, SDCardType (..)
@@ -118,7 +119,7 @@ data CardSpec
 	| Disease
 	| Necromancy
 	| Demonology
-	deriving (Eq, Show)
+	deriving (Eq, Show, Enum)
 	
 data CardColor
 	= NeutralColor
@@ -145,7 +146,7 @@ data CardType
 	| Tech_2_5
 	| Tech_3
 	| SpecToken
-	deriving (Eq, Show)
+	deriving (Eq, Show, Enum)
 
 data UtilityCardType
 	= CodexHolder
@@ -163,7 +164,7 @@ data UtilityCardType
 	| TowerBuilding
 	| BaseBuilding
 	| BlankCard
-	deriving (Eq, Show)
+	deriving (Eq, Show, Enum)
 	
 data SDCardType
 	= SDCard0
@@ -176,7 +177,7 @@ data SDCardType
 	| SDCard7
 	| SDCard8
 	| SDCard9
-	deriving (Eq, Show)
+	deriving (Eq, Show, Enum)
 	
 data TokenType
 	= Gold
@@ -185,7 +186,7 @@ data TokenType
 	| Time
 	| Cooldown
 	| Sword
-	deriving (Eq, Show)
+	deriving (Eq, Show, Enum)
 	
 data Card = Card CardIdentifier CardIndex
 	deriving (Show, Eq)
@@ -227,6 +228,10 @@ instance Encodable CardIndex where
 	encode (CI i) = pack $ show i
 	decode s = CI <$> (readMaybe $ unpack s)
 	
+instance Encodable TokenIndex where
+	encode (TI i) = pack $ show i
+	decode s = TI <$> (readMaybe $ unpack s)
+
 makeEncodable ''CardType
 	[ ('Hero, "hero")
 	, ('Spell_1, "spell1")
@@ -298,7 +303,7 @@ instance ToJSON CardEntity where
 	toJSON (CECard (Card (CodexCard spec rank) idx)) = String $ "codexcard-" `append` encode spec `append` "-" `append` encode rank `append` "-" `append` encode idx
 	toJSON (CECard (Card (UtilityCard uct) idx)) = String $ "utility-" `append` encode uct `append` "-" `append` encode idx
 	toJSON (CECard (Card (SDCard color sdtype) idx)) = String $ "sdcard-" `append` encode color `append` "-" `append` encode sdtype `append` "-" `append` encode idx
-	toJSON (CEToken (Token setype idx)) = String $ pack $ "token-" ++ setype ++ "-" ++ show idx
+	toJSON (CEToken (Token setype idx)) = String $ "token-" `append` encode setype `append` "-" `append` encode idx
 	
 instance FromJSON CardEntity where
 	parseJSON (String v) =
@@ -326,9 +331,9 @@ instance FromJSON CardEntity where
 				idx = readMaybe $ unpack num
 				(_, num) = breakOnEnd "-" rest
 				(suit, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
-			"token" -> case idx of
-				Just index -> return $ CEToken $ Token (unpack setype) (TI index)
-				Nothing -> mzero
+			"token" -> case (idx, decode setype) of
+				(Just index, Just setype') -> return $ CEToken $ Token setype' (TI index)
+				_ -> mzero
 			  where
 				idx = readMaybe $ unpack num
 				(_, num) = breakOnEnd "-" rest
