@@ -10,7 +10,7 @@ import System.Random (StdGen)
 import qualified Data.Map as Map
 import Safe (atMay)
 import System.Random (randomR)
-import Data.List (delete)
+import Data.List (delete, elemIndices)
 import Control.Applicative ((<$>))
 
 {- TODO LIST:
@@ -27,8 +27,8 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}
-			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold..Sword])
-			++ (map (renderCard CZTokens []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec..Demonology] )
+			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold .. Sword])
+			++ (map (renderCard CZTokens []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec .. Demonology] )
 		  ))
 		]
 	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
@@ -138,7 +138,7 @@ renderToken card token =
 		}
 		
 cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
-cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eActive = True, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
+cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eClickable = True, eDraggable = False, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+6, classNames = ["margin-onepx", "bordered"]}
@@ -160,6 +160,12 @@ nameToken token = show token
 nameZone :: CardZone -> String
 nameZone zone = show zone
 
+nameSpec :: CardSpec -> String
+nameSpec spec = show spec
+
+nameColor :: CardColor -> String
+nameColor color = show color
+
 unsafeTwiddleList :: [a] -> Int -> (a -> a) -> [a]
 unsafeTwiddleList list idx twiddler = take idx list ++ twiddler (list !! idx) ++ drop (idx+1) list
 
@@ -167,12 +173,12 @@ addSpecToCodex :: [[[Card]]] -> PlayerIndex -> CardSpec -> [[[Card]]]
 addSpecToCodex codexes pid spec = unsafeTwiddleList codexes pid $ (\codex -> unsafeTwiddleList codex (newRowId codex) (\[] -> newRow))
   where
 	newRowId codex = head $ elemIndices [] codex
-	newRow = map (map (\idx t -> Card (CodexCard spec t) (CI (pid*10 + idx))) [0, 1]) [Spell_1..Tech_3]
+	newRow = map (map (\idx t -> Card (CodexCard spec t) (CI (pid*10 + idx))) [0, 1]) [Spell_1 .. Tech_3]
 
-addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> Color -> ([[Card]], StdGen)
+addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> CardColor -> ([[Card]], StdGen)
 addStartingDeck rng decks pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
   where
-	(deck, rng') = shuffle (map (\t -> Card (SDCard color t) (CI pid)) [SDCard0..SDCard9]) rng
+	(deck, rng') = shuffle (map (\t -> Card (SDCard color t) (CI pid)) [SDCard0 .. SDCard9]) rng
 
 addSpec :: [[CardSpec]] -> PlayerIndex -> CardSpec -> [[CardSpec]]
 addSpec specs pid spec = unsafeTwiddleList specs pid (++ [spec])
@@ -224,7 +230,7 @@ moveCardEntityDisplay _ pid cardEntity zone@(CZ CZPlay _) = [GLBroadcast [GLMMov
 moveCardEntityDisplay s pid (CECard card) zone@(CZ _ px) = if inPlay s card
 	then [GLBroadcast [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
 	else [GLPrivate [px] [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to " ++ nameZone zone) CZGamelog]]
-moveCardEntityDisplay _ _ _ _ = [] -- move fails for this..
+moveCardEntityDisplay _ _ _ _ = [] -- move fails for this.
 
 nameCardEntity :: CardEntity -> String
 nameCardEntity (CECard c) = nameCard c

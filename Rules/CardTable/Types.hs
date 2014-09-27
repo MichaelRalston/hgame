@@ -11,6 +11,7 @@ module Rules.CardTable.Types
 	, CardIndex (..)
 	, CardSpec (..)
 	, CardColor (..)
+	, CardType (..)
 	, TokenType (..)
 	, UtilityCardType (..)
 	, CardIdentifier (..)
