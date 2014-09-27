@@ -25,7 +25,12 @@ import Control.Applicative ((<$>))
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
 renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
   where
-	tokens' = [(CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}, map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold..Sword]))]
+	tokens' =
+		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}
+			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold..Sword])
+			++ (map (renderCard CZTokens []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec..Demonology] )
+		  )
+		]
 	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
 	tables' = map ($ tokens) $ zipWith ($) (map (renderZone (Show) CZPlay exhaustedCards) [0..]) tables
 	decks' = map ($ []) $ zipWith ($) (map (renderZone (ConcealAll) CZDeck []) [0..]) decks
@@ -106,9 +111,13 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 					CZCodexHolder -> 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
-		, eActive = case cardType of
+		, eClickable = case cardType of
 			UtilityCard BlankCard -> True
 			UtilityCard _ -> False
+			_ -> True
+		, eDraggable = case cardType of
+			UtilityCard _ -> False
+			CodexCard _ SpecToken -> False
 			_ -> True
 		, eNestOnEntity = Nothing
 		, eClasses = if c `elem` exhaustedCards then ["rotate90"] else []
@@ -122,7 +131,8 @@ renderToken card token =
 		, eSize = SESAutoWidth 23
 		, eEntitiesDropOn = False
 		, eDropOnEntities = True
-		, eActive = True
+		, eDraggable = True
+		, eClickable = False
 		, eNestOnEntity = CECard <$> card
 		, eClasses = ["rotate180"] -- TODO: replace with real things?
 		}

@@ -124,7 +124,8 @@ data ScreenEntity entity = SE
 	, eSize :: ScreenEntitySize
 	, eDropOnEntities :: Bool
 	, eEntitiesDropOn :: Bool
-	, eActive :: Bool
+	, eDraggable :: Bool
+	, eClickable :: Bool
 	, eClasses :: [String]
 	, eNestOnEntity :: Maybe entity
 	}
@@ -162,7 +163,7 @@ instance ToJSON (ScreenEntitySize) where
 	toJSON (SESAutoWidth h) = object ["type" .= String "autoWidth", "height" .= h]
 	
 instance EntityId entity => ToJSON (ScreenEntity entity) where
-	toJSON SE {eId, eDisplay, eSize, eActive, eDropOnEntities, eEntitiesDropOn, eClasses, eNestOnEntity} = object ["entityId" .= eId, "display" .= eDisplay, "active" .= eActive, "size" .= eSize, "dropOnEntities" .= eDropOnEntities, "entitiesDropOn" .= eEntitiesDropOn, "classes" .= eClasses, "nestedEntity" .= maybe (Bool False) toJSON eNestOnEntity]
+	toJSON SE {eId, eDisplay, eSize, eClickable, eDraggable, eDropOnEntities, eEntitiesDropOn, eClasses, eNestOnEntity} = object ["entityId" .= eId, "display" .= eDisplay, "clickable" .= eClickable, "draggable" .= eDraggable, "size" .= eSize, "dropOnEntities" .= eDropOnEntities, "entitiesDropOn" .= eEntitiesDropOn, "classes" .= eClasses, "nestedEntity" .= maybe (Bool False) toJSON eNestOnEntity]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ map renderScreenAssocs $ assocs screen
