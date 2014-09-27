@@ -38,7 +38,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 	hands' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZHand []) [0..]) hands
 	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex []) [0..]) [[], []]
 	codexrows' = map ($ []) $ zipWith ($) (map (\idx -> renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx) [0..]) (concat codexes)
-	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[]}, []))]
+	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[], droppable=False}, []))]
 	playmats' = concatMap ($ tokens) $ map makePlaymat [0, 1] 
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
