@@ -168,20 +168,6 @@ function makeZone(zoneId, displayData) {
 			alert("Unimplemented zone type " + displayData.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
-	if (displayData.droppable) {
-		$zone.droppable({
-			drop: function(event, ui) {
-				if (!$zone.is(ui.draggable.parent())) {
-					var id = ui.draggable.attr('id');
-					if (id) {
-						sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
-					}
-				}
-			},
-			tolerance: 'pointer',
-			greedy: true,
-		});
-	}
 	return $zone;
 }
 
@@ -190,6 +176,20 @@ function getZone(zoneData) {
 	var $zone = $('#zone-'+zoneId);
 	if ($zone.length == 0) {
 		$zone = makeZone(zoneData.zoneId, zoneData.display.display);
+		if (zoneData.display.droppable) {
+			$zone.droppable({
+				drop: function(event, ui) {
+					if (!$zone.is(ui.draggable.parent())) {
+						var id = ui.draggable.attr('id');
+						if (id) {
+							sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
+						}
+					}
+				},
+				tolerance: 'pointer',
+				greedy: true,
+			});
+		}
 		zoneData.display.classNames.forEach(function(cn) {
 			$zone.addClass(cn);
 		});
