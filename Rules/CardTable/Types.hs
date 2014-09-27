@@ -121,7 +121,7 @@ data CardSpec
 	| Disease
 	| Necromancy
 	| Demonology
-	deriving (Eq, Show, Enum)
+	deriving (Eq, Show, Enum, Ord)
 	
 data CardColor
 	= NeutralColor
@@ -131,7 +131,7 @@ data CardColor
 	| Purple
 	| White
 	| Black
-	deriving (Eq, Show)
+	deriving (Eq, Show, Ord)
 	
 data CardType
 	= Hero
@@ -148,7 +148,7 @@ data CardType
 	| Tech_2_5
 	| Tech_3
 	| SpecToken
-	deriving (Eq, Show, Enum)
+	deriving (Eq, Show, Enum, Ord)
 
 data UtilityCardType
 	= CodexHolder
@@ -166,7 +166,7 @@ data UtilityCardType
 	| TowerBuilding
 	| BaseBuilding
 	| BlankCard
-	deriving (Eq, Show, Enum)
+	deriving (Eq, Show, Enum, Ord)
 	
 data SDCardType
 	= SDCard0
@@ -179,7 +179,7 @@ data SDCardType
 	| SDCard7
 	| SDCard8
 	| SDCard9
-	deriving (Eq, Show, Enum)
+	deriving (Eq, Show, Enum, Ord)
 	
 data TokenType
 	= Gold
@@ -188,7 +188,7 @@ data TokenType
 	| Time
 	| Cooldown
 	| Sword
-	deriving (Eq, Show, Enum)
+	deriving (Eq, Show, Enum, Ord)
 	
 data Card = Card CardIdentifier CardIndex
 	deriving (Show, Eq)
@@ -200,6 +200,19 @@ data CardIdentifier
 data Token = Token TokenType TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
 	deriving (Show, Eq)
 
+instance Ord Card where
+	compare (CodexCard s t) (CodexCard s2 t2) = case compare s s2 of
+		GT -> GT
+		LT -> LT
+		WQ -> compare t t2
+	compare (CodexCard _ _) _ = GT
+	compare (UtilityCard t) (UtilityCard t2) = compare t t2
+	compare (UtilityCard _) (SDCard _ _) = GT
+	compare (SDCard c t) (SDCard c2 t2) = case compare c c2 of
+		GT -> GT
+		LT -> LT
+		EQ -> compare t t2
+	
 class Encodable a where
 	encode :: a -> Text
 	decode :: Text -> Maybe a

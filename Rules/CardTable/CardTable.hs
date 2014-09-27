@@ -14,7 +14,6 @@ import Data.List (delete, elemIndices)
 import Control.Applicative ((<$>))
 
 {- TODO LIST:
-	- Buttons to populate your codex with specs. (don't allow repeating a spec, don't allow going past 3, the first one sets your starting deck.)
 	- Real images!
 	- Clicking on a codex card should put it into your discard.
 	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
@@ -175,7 +174,7 @@ addSpecToCodex :: [[[Card]]] -> PlayerIndex -> CardSpec -> [[[Card]]]
 addSpecToCodex codexes pid spec = unsafeTwiddleList codexes pid $ (\codex -> unsafeTwiddleList codex (newRowId codex) (\[] -> newRow))
   where
 	newRowId codex = head $ elemIndices [] codex
-	newRow = [Card (CodexCard spec t) (CI (pid*10 + idx)) | idx <- [0, 1], t <- [Spell_1 .. Tech_3]]
+	newRow = sort $ [Card (CodexCard spec t) (CI (pid*10 + idx)) | idx <- [0, 1], t <- [Spell_1 .. Tech_3]]
 
 addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> CardColor -> ([[Card]], StdGen)
 addStartingDeck decks rng pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
@@ -200,7 +199,7 @@ selectSpec s@(CTS{codexes, specs, decks, rng}) spec pid = case length (specs !! 
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec.") CZGamelog]]
 		, []
 		)
-
+		
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s _ (UIClick (CECard (Card (UtilityCard BlankCard) (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
@@ -208,12 +207,13 @@ inputHandler s pid (UIClick (CECard (Card (CodexCard spec SpecToken) _))) = retu
 inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
 inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
 inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
-inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ if inPlay s card
-	then ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
+inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case (inPlay s card, inCodex s card) -> 
+	(True, _) ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
 		 , [GLBroadcast [GLMPlayerAction pid ((if card `elem` exhaustedCards then "readied " else "exhausted ") ++ nameCard card) CZGamelog]]
 		 , []
 		 )
-	else (s, [], [])
+	(False, True) -> (moveCard s card $ CZ CZDiscard pid, moveCardEntityDisplay s pid (CECard card) $ CZ CZDiscard pid, [])
+	_ -> (s, [], [])
 inputHandler s _ (UIClick (CEToken _)) = return (s, [], []) -- TODO: click on the underlying?
 inputHandler s _ (UIDragEntity _ (CEToken _)) = return (s, [], []) -- TODO: pass to the underlying?
 inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if inPlay s card
@@ -244,11 +244,15 @@ removeToken s se = s {tokens = filter ((/= se) . fst) (tokens s)}
 inPlay :: CardTableState -> Card -> Bool
 inPlay s card = True `elem` map (elem card) (tables s)
 
+inCodex :: CardTableState -> Card -> Bool
+inCodex s card = True `elem` map (elem card) (concat $ codexes s)
+
 moveCard :: CardTableState -> Card -> CardZone -> CardTableState
 moveCard s (Card (UtilityCard _) _) _ = s
 moveCard s card (CZ CZHand idx) = (removeSubEntitiesForCard (deleteCard s card) card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
 moveCard s card (CZ CZDeck idx) = (removeSubEntitiesForCard (deleteCard s card) card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
 moveCard s card (CZ CZDiscard idx) = (removeSubEntitiesForCard (deleteCard s card) card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
+moveCard s card@(CodexCard spec _) (CZ CZCodexHolder idx) = (removeSubEntitiesForCard (deleteCard s card) card) { codexes = unsafeTwiddleList (codexes $ deleteCard s card) idx (sort $ insertForIdx (head $ elemIndices spec ((specs s) !! idx)) card) }
 moveCard s card (CZ CZPlay idx) = (deleteCard s card) { tables = insertForIdx (tables $ deleteCard s card) idx card }
 moveCard s _ _ = s
 
@@ -258,6 +262,7 @@ deleteCard s card = s
 	, tables = map (delete card) $ tables s
 	, discards = map (delete card) $ discards s
 	, decks = map (delete card) $ decks s
+	, codexes = [map (delete card) codex | codex <- codexes s]
 	}
 	
 removeSubEntitiesForCard :: CardTableState -> Card -> CardTableState
