@@ -15,8 +15,6 @@ import Control.Applicative ((<$>))
 
 {- TODO LIST:
 	- Real images!
-	- Clicking on a codex card should put it into your discard.
-	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
 	- Hero zone.
 	- Worker zone.
 	
