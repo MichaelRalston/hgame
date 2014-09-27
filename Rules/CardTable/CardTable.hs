@@ -21,21 +21,24 @@ import Control.Applicative ((<$>))
 	- Replace the awful map-chaining in the renderer with list comprehensions.
 -}
 
+withIndexes :: [a] -> [(Int, a)]
+withIndexes list = zip [0..] list
+
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
 renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
-			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold .. Sword])
-			++ (map (renderCard CZPlaymat []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec .. Demonology] )
-		  ))
+			, [renderToken Nothing $ Token tokenType $ TI 0 | tokenType <- [Gold .. Sword]]
+			++ [renderCard CZPlaymat [] $ Card (CodexCard spec SpecToken) $ CI 0 | spec <- [NeutralSpec .. Demonology]] )
+		  )
 		]
-	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
-	tables' = map ($ tokens) $ zipWith ($) (map (renderZone (Show) CZPlay exhaustedCards) [0..]) tables
-	decks' = map ($ []) $ zipWith ($) (map (renderZone (ConcealAll) CZDeck []) [0..]) decks
-	hands' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZHand []) [0..]) hands
-	codexes' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZCodex []) [0..]) [[], []]
-	codexrows' = map ($ []) $ zipWith ($) (map (\idx -> renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx) [0..]) (concat codexes)
+	discards' = [renderZone (ConcealExcept pid) CZDiscard [] idx discard [] | (idx, discard) <- withIndexes discards]
+	tables' = [renderZone (Show) CZPlay exhaustedCards idx table [] | (idx, table) <- withIndexes tables]
+	decks' = [renderZone (ConcealAll) CZDeck [] idx deck [] | (idx, deck) <- withIndexes decks]
+	hands' = [renderZone (ConcealExcept pid) CZHand [] idx hand [] | (idx, hand) <- withIndexes hands]
+	codexes' = [renderZone (ConcealExcept pid) CZCodex [] idx codex [] | (idx, codex) <- withIndexes [[], []]]
+	codexrows' = [renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx codexRow [] | (idx, codexRow) <- withIndexes $ concat codexes]
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[], droppable=False}, []))]
 	playmats' = concatMap ($ tokens) $ map makePlaymat [0, 1] 
 
