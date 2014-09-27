@@ -20,6 +20,8 @@ import Control.Applicative ((<$>))
 	- Dragging something onto the codex should put it into the codex of the row that matches the spec.
 	- Hero zone.
 	- Worker zone.
+	
+	- Replace the awful map-chaining in the renderer with list comprehensions.
 -}
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
@@ -28,7 +30,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}
 			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold .. Sword])
-			++ (map (renderCard CZTokens []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec .. Demonology] )
+			++ (map (renderCard CZPlaymat []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec .. Demonology] )
 		  ))
 		]
 	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
@@ -167,13 +169,13 @@ nameColor :: CardColor -> String
 nameColor color = show color
 
 unsafeTwiddleList :: [a] -> Int -> (a -> a) -> [a]
-unsafeTwiddleList list idx twiddler = take idx list ++ twiddler (list !! idx) ++ drop (idx+1) list
+unsafeTwiddleList list idx twiddler = take idx list ++ [twiddler (list !! idx)] ++ drop (idx+1) list
 
 addSpecToCodex :: [[[Card]]] -> PlayerIndex -> CardSpec -> [[[Card]]]
 addSpecToCodex codexes pid spec = unsafeTwiddleList codexes pid $ (\codex -> unsafeTwiddleList codex (newRowId codex) (\[] -> newRow))
   where
 	newRowId codex = head $ elemIndices [] codex
-	newRow = map (map (\idx t -> Card (CodexCard spec t) (CI (pid*10 + idx))) [0, 1]) [Spell_1 .. Tech_3]
+	newRow = [Card (CodexCard spec t) (CI (pid*10 + idx)) | idx <- [0, 1], t <- [Spell_1 .. Tech_3]]
 
 addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> CardColor -> ([[Card]], StdGen)
 addStartingDeck rng decks pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
