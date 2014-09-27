@@ -229,6 +229,9 @@ newToken _ c = c -- this is either a move-around or a non-sub-entity.
 
 moveCardEntityDisplay :: CardTableState -> PlayerIndex -> CardEntity -> CardZone -> [Gamelog CardEntity CardZone]
 moveCardEntityDisplay _ pid cardEntity zone@(CZ CZPlay _) = [GLBroadcast [GLMMove [cardEntity] zone, GLMPlayerAction pid ("moved " ++ nameCardEntity cardEntity ++ " to " ++ nameZone zone) CZGamelog]]
+moveCardEntityDisplay s pid (CECard card) (CZ CodexHolder px) = if inPlay s card
+	then [GLBroadcast [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to their codex.") CZGamelog]]
+	else [GLPrivate [px] [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to your codex.") CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to their codex.") CZGamelog]]
 moveCardEntityDisplay s pid (CECard card) zone@(CZ _ px) = if inPlay s card
 	then [GLBroadcast [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
 	else [GLPrivate [px] [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to " ++ nameZone zone) CZGamelog]]
