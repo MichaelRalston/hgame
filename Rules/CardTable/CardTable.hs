@@ -178,7 +178,7 @@ addSpec :: [[CardSpec]] -> PlayerIndex -> CardSpec -> [[CardSpec]]
 addSpec specs pid spec = unsafeTwiddleList specs pid (++ [spec])
 
 selectSpec :: CardTableState -> CardSpec -> PlayerIndex -> GameDelta CardTableState CardEntity CardZone
-selectSpec s@(CTS{codexes, specs decks, rng}) spec pid = case length (specs !! pid) of
+selectSpec s@(CTS{codexes, specs, decks, rng}) spec pid = case length (specs !! pid) of
 	0 ->
 		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec, decks = newDecks, rng = newRng}
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec, giving them the " ++ nameColor (colorOfSpec spec) ++ " starting deck.") CZGamelog]]
