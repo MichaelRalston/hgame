@@ -178,7 +178,7 @@ addSpecToCodex codexes pid spec = unsafeTwiddleList codexes pid $ (\codex -> uns
 	newRow = [Card (CodexCard spec t) (CI (pid*10 + idx)) | idx <- [0, 1], t <- [Spell_1 .. Tech_3]]
 
 addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> CardColor -> ([[Card]], StdGen)
-addStartingDeck rng decks pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
+addStartingDeck decks rng pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
   where
 	(deck, rng') = shuffle (map (\t -> Card (SDCard color t) (CI pid)) [SDCard0 .. SDCard9]) rng
 
@@ -193,10 +193,10 @@ selectSpec s@(CTS{codexes, specs, decks, rng}) spec pid = case length (specs !! 
 		, []
 		)
 	  where
-		(newDecks, newRng) = addStartingDeck rng decks pid $ colorOfSpec spec
+		(newDecks, newRng) = addStartingDeck decks rng pid $ colorOfSpec spec
 	3 -> (s, [], [])
 	_ ->
-		( s {codexes = addSpec codexes pid spec, specs = addSpec specs spec pid}
+		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs spec pid}
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec.") CZGamelog]]
 		, []
 		)
@@ -204,7 +204,7 @@ selectSpec s@(CTS{codexes, specs, decks, rng}) spec pid = case length (specs !! 
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s _ (UIClick (CECard (Card (UtilityCard BlankCard) (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
-inputHandler s pid (UIClick (CECard (Card (CodexCard spec CodexCard) _))) = return $ selectSpec s spec pid
+inputHandler s pid (UIClick (CECard (Card (CodexCard spec SpecToken) _))) = return $ selectSpec s spec pid
 inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
 inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
 inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
