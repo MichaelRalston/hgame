@@ -189,12 +189,12 @@ nameCard (Card (SDCard Green SDCard8) _) = "Rampant Growth"
 nameCard (Card (SDCard Green SDCard9) _) = "Forest's Favor"
 
 nameCard (Card (CodexCard NeutralSpec Hero) _) = "Pearl Harper"
-nameCard (Card (CodexCard AnarchySpec Hero) _) = "Captain Zane"
-nameCard (Card (CodexCard BloodSpec Hero) _) = "Drakk Ramhorn"
-nameCard (Card (CodexCard FireSpec Hero) _) = "Jaina Stormborne"
-nameCard (Card (CodexCard BalanceSpec Hero) _) = "Master Midori"
-nameCard (Card (CodexCard FeralSpec Hero) _) = "Calamandra Moss"
-nameCard (Card (CodexCard GrowthSpec Hero) _) = "Argagarg Garg"
+nameCard (Card (CodexCard Anarchy Hero) _) = "Captain Zane"
+nameCard (Card (CodexCard Blood Hero) _) = "Drakk Ramhorn"
+nameCard (Card (CodexCard Fire Hero) _) = "Jaina Stormborne"
+nameCard (Card (CodexCard Balance Hero) _) = "Master Midori"
+nameCard (Card (CodexCard Feral Hero) _) = "Calamandra Moss"
+nameCard (Card (CodexCard Growth Hero) _) = "Argagarg Garg"
 
 cardImage :: CardIdentifier -> ScreenDisplay
 cardImage (SDCard NeutralColor SDCard0) = SDImage "images/cards/__0002_timely%20messenger.jpg"
@@ -231,12 +231,12 @@ cardImage (SDCard Green SDCard8) = SDImage "images/cards/__0008_rampant%20growth
 cardImage (SDCard Green SDCard9) = SDImage "images/cards/__0009_forests%20favor.jpg"
 
 cardImage (CodexCard NeutralSpec Hero) = SDImage "images/cards/__0019_neutral%20hero.jpg"
-cardImage (CodexCard AnarchySpec Hero) = SDImage "images/cards/__0000_anarchy%20hero.jpg"
-cardImage (CodexCard BloodSpec Hero) = SDImage "images/cards/__0001_blood%20hero.jpg"
-cardImage (CodexCard FireSpec Hero) = SDImage "images/cards/__0002_fire%20hero.jpg"
-cardImage (CodexCard BalanceSpec Hero) = SDImage "images/cards/__0003_balance%20hero.jpg"
-cardImage (CodexCard FeralSpec Hero) = SDImage "images/cards/__0004_feral%20hero.jpg"
-cardImage (CodexCard GrowthSpec Hero) = SDImage "images/cards/__0005_growth%20hero.jpg"
+cardImage (CodexCard Anarchy Hero) = SDImage "images/cards/__0000_anarchy%20hero.jpg"
+cardImage (CodexCard Blood Hero) = SDImage "images/cards/__0001_blood%20hero.jpg"
+cardImage (CodexCard Fire Hero) = SDImage "images/cards/__0002_fire%20hero.jpg"
+cardImage (CodexCard Balance Hero) = SDImage "images/cards/__0003_balance%20hero.jpg"
+cardImage (CodexCard Feral Hero) = SDImage "images/cards/__0004_feral%20hero.jpg"
+cardImage (CodexCard Growth Hero) = SDImage "images/cards/__0005_growth%20hero.jpg"
 
 cardImage _ = SDImage "images/placeholder.jpg"
 
