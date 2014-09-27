@@ -160,9 +160,43 @@ nameToken token = show token
 nameZone :: CardZone -> String
 nameZone zone = show zone
 
+unsafeTwiddleList :: [a] -> Int -> (a -> a) -> [a]
+unsafeTwiddleList list idx twiddler = take idx list ++ twiddler (list !! idx) ++ drop (idx+1) list
+
+addSpecToCodex :: [[[Card]]] -> PlayerIndex -> CardSpec -> [[[Card]]]
+addSpecToCodex codexes pid spec = unsafeTwiddleList codexes pid $ (\codex -> unsafeTwiddleList codex (newRowId codex) (\[] -> newRow))
+  where
+	newRowId codex = head $ elemIndices [] codex
+	newRow = map (map (\idx t -> Card (CodexCard spec t) (CI (pid*10 + idx))) [0, 1]) [Spell_1..Tech_3]
+
+addStartingDeck :: [[Card]] -> StdGen -> PlayerIndex -> Color -> ([[Card]], StdGen)
+addStartingDeck rng decks pid color = (unsafeTwiddleList decks pid (\[] -> deck), rng')
+  where
+	(deck, rng') = shuffle (map (\t -> Card (SDCard color t) (CI pid)) [SDCard0..SDCard9]) rng
+
+addSpec :: [[CardSpec]] -> PlayerIndex -> CardSpec -> [[CardSpec]]
+addSpec specs pid spec = unsafeTwiddleList specs pid (++ [spec])
+
+selectSpec :: CardTableState -> CardSpec -> PlayerIndex -> GameDelta CardTableState CardEntity CardZone
+selectSpec s@(CTS{codexes, specs decks, rng}) spec pid = case length (specs !! pid) of
+	0 ->
+		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec, decks = newDecks, rng = newRng}
+		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec, giving them the " ++ nameColor (colorOfSpec spec) ++ " starting deck.") CZGamelog]]
+		, []
+		)
+	  where
+		(newDecks, newRng) = addStartingDeck rng decks pid $ colorOfSpec spec
+	3 -> (s, [], [])
+	_ ->
+		( s {codexes = addSpec codexes pid spec, specs = addSpec specs spec pid}
+		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec.") CZGamelog]]
+		, []
+		)
+
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s _ (UIClick (CECard (Card (UtilityCard BlankCard) (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
+inputHandler s pid (UIClick (CECard (Card (CodexCard spec CodexCard) _))) = return $ selectSpec s spec pid
 inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
 inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
 inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
@@ -245,6 +279,27 @@ shuffle a r = (element:rest, r')
 	rest' = take idx a ++ drop (idx+1) a
 	(rest, r') = shuffle rest' r''
 	
+colorOfSpec :: CardSpec -> CardColor
+colorOfSpec NeutralSpec = NeutralColor
+colorOfSpec Anarchy = Red
+colorOfSpec Blood = Red
+colorOfSpec Fire = Red
+colorOfSpec Balance = Green
+colorOfSpec Feral = Green
+colorOfSpec Growth = Green
+colorOfSpec Law = Blue
+colorOfSpec Peace = Blue
+colorOfSpec Truth = Blue
+colorOfSpec Past = Purple
+colorOfSpec Present = Purple
+colorOfSpec Future = Purple
+colorOfSpec Discipline = White
+colorOfSpec Ninjitsu = White
+colorOfSpec Strength = White
+colorOfSpec Disease = Black
+colorOfSpec Necromancy = Black
+colorOfSpec Demonology = Black
+	
 makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
 	let deck = []
@@ -256,6 +311,7 @@ makeCardTable generator = do
 		, tokens = []
 		, codexes = [[[], [], []], [[], [], []]]
 		, exhaustedCards = []
+		, specs = [[], []]
 		, rng = generator
 		}		
 	return Game

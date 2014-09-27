@@ -33,6 +33,7 @@ data CardTableState = CTS
 	, tokens :: [(Token, Card)]
 	, codexes :: [[[Card]]]
 	, exhaustedCards :: [Card]
+	, specs :: [[CardSpec]]
 	, rng :: StdGen
 	}
 	
