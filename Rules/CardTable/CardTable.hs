@@ -10,7 +10,7 @@ import System.Random (StdGen)
 import qualified Data.Map as Map
 import Safe (atMay)
 import System.Random (randomR)
-import Data.List (delete, elemIndices)
+import Data.List (delete, elemIndices, sort)
 import Control.Applicative ((<$>))
 
 {- TODO LIST:
@@ -207,8 +207,8 @@ inputHandler s pid (UIClick (CECard (Card (CodexCard spec SpecToken) _))) = retu
 inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
 inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
 inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
-inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case (inPlay s card, inCodex s card) -> 
-	(True, _) ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
+inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case (inPlay s card, inCodex s card) of 
+	(True, _) -> ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
 		 , [GLBroadcast [GLMPlayerAction pid ((if card `elem` exhaustedCards then "readied " else "exhausted ") ++ nameCard card) CZGamelog]]
 		 , []
 		 )
@@ -252,7 +252,7 @@ moveCard s (Card (UtilityCard _) _) _ = s
 moveCard s card (CZ CZHand idx) = (removeSubEntitiesForCard (deleteCard s card) card) { hands = insertForIdx (hands $ deleteCard s card) idx card }
 moveCard s card (CZ CZDeck idx) = (removeSubEntitiesForCard (deleteCard s card) card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
 moveCard s card (CZ CZDiscard idx) = (removeSubEntitiesForCard (deleteCard s card) card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
-moveCard s card@(CodexCard spec _) (CZ CZCodexHolder idx) = (removeSubEntitiesForCard (deleteCard s card) card) { codexes = unsafeTwiddleList (codexes $ deleteCard s card) idx (sort $ insertForIdx (head $ elemIndices spec ((specs s) !! idx)) card) }
+moveCard s card@(Card (CodexCard spec _) _) (CZ CZCodexHolder idx) = (removeSubEntitiesForCard (deleteCard s card) card) { codexes = unsafeTwiddleList (codexes $ deleteCard s card) idx (\codex -> (sort $ insertForIdx codex (head $ elemIndices spec ((specs s) !! idx)) card)) }
 moveCard s card (CZ CZPlay idx) = (deleteCard s card) { tables = insertForIdx (tables $ deleteCard s card) idx card }
 moveCard s _ _ = s
 

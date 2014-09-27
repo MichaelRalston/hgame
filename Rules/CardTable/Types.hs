@@ -91,8 +91,8 @@ instance FromJSON CardZone where
 			(pfx, rst) = breakOn "-" v
 	parseJSON _ = mzero
 	
-data CardIndex = CI Int deriving (Show, Eq)
-data TokenIndex = TI Int deriving (Show, Eq)
+data CardIndex = CI Int deriving (Show, Eq, Ord)
+data TokenIndex = TI Int deriving (Show, Eq, Ord)
 
 data CardEntity
 	= CECard Card
@@ -200,18 +200,21 @@ data CardIdentifier
 data Token = Token TokenType TokenIndex -- String for type? Int for 'index'. index 0 is the special global one.
 	deriving (Show, Eq)
 
+thenCmp :: Ordering -> Ordering -> Ordering
+thenCmp EQ o2 = o2
+thenCmp o1 _ = o1
+
 instance Ord Card where
-	compare (CodexCard s t) (CodexCard s2 t2) = case compare s s2 of
-		GT -> GT
-		LT -> LT
-		WQ -> compare t t2
+	compare (Card cid cidx) (Card cid2 cidx2) = thenCmp (compare cid cid2) (compare cidx cidx2)
+
+instance Ord CardIdentifier where
+	compare (CodexCard s t) (CodexCard s2 t2) = thenCmp (compare s s2) (compare t t2)
 	compare (CodexCard _ _) _ = GT
+	compare _ (CodexCard _ _) = LT
 	compare (UtilityCard t) (UtilityCard t2) = compare t t2
 	compare (UtilityCard _) (SDCard _ _) = GT
-	compare (SDCard c t) (SDCard c2 t2) = case compare c c2 of
-		GT -> GT
-		LT -> LT
-		EQ -> compare t t2
+	compare (SDCard _ _) (UtilityCard _) = LT
+	compare (SDCard c t) (SDCard c2 t2) = thenCmp (compare c c2) (compare t t2)
 	
 class Encodable a where
 	encode :: a -> Text
