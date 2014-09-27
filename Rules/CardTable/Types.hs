@@ -83,7 +83,7 @@ instance FromJSON CardZone where
 			("codex", Just index) -> return $ CZ CZCodex index
 			("playmat", Just index) -> return $ CZ CZPlaymat index
 			("codexrow", Just index) -> return $ CZ CZCodexRow index
-			("codexholder", Just index) -> return $ CZ CZCodexRow index
+			("codexholder", Just index) -> return $ CZ CZCodexHolder index
 			(_, Just _) -> mzero
 		  where
 			idx = readMaybe $ unpack num

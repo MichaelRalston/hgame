@@ -181,9 +181,6 @@ function getZone(zoneData) {
 				drop: function(event, ui) {
 					if (!$zone.is(ui.draggable.parent())) {
 						var id = ui.draggable.attr('id');
-						console.log("Dropping ",id,"on",zoneId);
-						console.log(event);
-						console.log(ui);
 						if (id) {
 							sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
 						}
