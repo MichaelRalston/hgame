@@ -82,7 +82,7 @@ renderCard :: CardZoneType -> [Card] -> Card -> ScreenEntity CardEntity
 renderCard t exhaustedCards c@(Card cardType _)  =
 	SE
 		{ eId = CECard c
-		, eDisplay = SDImage "images/placeholder.jpg"
+		, eDisplay = cardImage cardType
 		, eSize = case cardType of
 			UtilityCard Hero_1_Holder -> SESPercent 95 33
 			UtilityCard Hero_2_Holder -> SESPercent 95 33
@@ -152,6 +152,14 @@ zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCode
 
 nameCard :: Card -> String
 nameCard card = show card
+nameCard (Card (SDCard NeutralColor SDCard0) _) = "something"
+nameCard (Card (SDCard Red SDCard0) _) = "something else"
+nameCard (Card (CodexCard NeutralSpec Hero) _) = "Pearl Harper"
+
+cardImage :: CardIdentifier -> ScreenDisplay
+cardImage (SDCard NeutralColor SDCard0) = SDImage "images/cards/WHATEVER.jpg"
+cardImage (CodexCard NeutralSpec Hero) = SDImage "images/cards/__0019_neutral%20hero.jpg"
+cardImage _ = SDImage "images/placeholder.jpg"
 
 nameToken :: Token -> String
 nameToken token = show token
