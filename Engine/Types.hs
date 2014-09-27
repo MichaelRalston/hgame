@@ -101,6 +101,7 @@ data ScreenDisplay
 data ZoneDisplayData zone entity = ZDD
 	{ display :: ZoneDisplay zone entity
 	, order :: Int
+	, droppable :: Bool
 	, classNames :: [String]
 	}
 
@@ -156,7 +157,7 @@ instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplay zone entity) wher
 	toJSON ZDDialog = object ["type" .= String "dialog"]
 	
 instance (EntityId entity, ZoneId zone) => ToJSON (ZoneDisplayData zone entity) where
-	toJSON (ZDD {display, order, classNames}) = object ["display" .= display, "order" .= order, "classNames" .= classNames]
+	toJSON (ZDD {display, order, classNames, droppable}) = object ["display" .= display, "order" .= order, "classNames" .= classNames, "droppable" .= droppable]
 
 instance ToJSON (ScreenEntitySize) where
 	toJSON (SESPercent h w) = object ["type" .= String "percent", "height" .= h, "width" .= w]

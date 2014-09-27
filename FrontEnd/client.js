@@ -168,18 +168,20 @@ function makeZone(zoneId, displayData) {
 			alert("Unimplemented zone type " + displayData.type);
 			$zone = $('#id_that_does_not_exist_ever');			
 	}
-	$zone.droppable({
-		drop: function(event, ui) {
-			if (!$zone.is(ui.draggable.parent())) {
-				var id = ui.draggable.attr('id');
-				if (id) {
-					sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
+	if (displayData.droppable) {
+		$zone.droppable({
+			drop: function(event, ui) {
+				if (!$zone.is(ui.draggable.parent())) {
+					var id = ui.draggable.attr('id');
+					if (id) {
+						sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
+					}
 				}
-			}
-		},
-		tolerance: 'pointer',
-		greedy: true,
-	});
+			},
+			tolerance: 'pointer',
+			greedy: true,
+		});
+	}
 	return $zone;
 }
 
