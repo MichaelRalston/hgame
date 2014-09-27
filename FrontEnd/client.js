@@ -175,12 +175,13 @@ function getZone(zoneData) {
 	var zoneId = zoneData.zoneId;
 	var $zone = $('#zone-'+zoneId);
 	if ($zone.length == 0) {
-		$zone = makeZone(zoneData.zoneId, zoneData.display.display);
+		$zone = makeZone(zoneId, zoneData.display.display);
 		if (zoneData.display.droppable) {
-			$zone.droppable({
+			$zone.droppable({			
 				drop: function(event, ui) {
 					if (!$zone.is(ui.draggable.parent())) {
 						var id = ui.draggable.attr('id');
+						console.log("Dropping ",id,"on",zoneId);
 						if (id) {
 							sendMsg({'action':'drag','zone':zoneId,'entity':id.slice(7)});
 						}
