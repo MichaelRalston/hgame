@@ -29,7 +29,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"]}
 			,  (map (renderToken Nothing) $ map (\tokenType -> Token tokenType $ TI 0) [Gold..Sword])
 			++ (map (renderCard CZTokens []) $ map (\spec -> Card (CodexCard spec SpecToken) (CI 0)) [NeutralSpec..Demonology] )
-		  )
+		  ))
 		]
 	discards' = map ($ []) $ zipWith ($) (map (renderZone (ConcealExcept pid) CZDiscard []) [0..]) discards
 	tables' = map ($ tokens) $ zipWith ($) (map (renderZone (Show) CZPlay exhaustedCards) [0..]) tables
