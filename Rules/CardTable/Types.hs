@@ -55,7 +55,6 @@ data CardZoneType
 	| CZCodexRow
 	| CZCodexHolder
 	| CZPlaymat
-	| CZHeroes
 	deriving (Show, Eq, Ord, Enum)
 	
 instance ZoneId CardZone
@@ -69,7 +68,6 @@ instance ToJSON CardZone where
 	toJSON (CZ CZCodexRow idx) = String $ pack $ "codexrow-" ++ show idx
 	toJSON (CZ CZCodexHolder idx) = String $ pack $ "codexholder-" ++ show idx
 	toJSON (CZ CZPlaymat idx) = String $ pack $ "playmat-" ++ show idx
-	toJSON (CZ CZHeroes idx) = String $ pack $ "heroes-" ++ show idx
 	toJSON (CZGamelog) = String $ pack $ "gamelog"
 	toJSON (CZTokens) = String $ pack $ "tokens"
 	
@@ -85,7 +83,6 @@ instance FromJSON CardZone where
 			("discard", Just index) -> return $ CZ CZDiscard index
 			("codex", Just index) -> return $ CZ CZCodex index
 			("playmat", Just index) -> return $ CZ CZPlaymat index
-			("heroes", Just index) -> return $ CZ CZHeroes index
 			("codexrow", Just index) -> return $ CZ CZCodexRow index
 			("codexholder", Just index) -> return $ CZ CZCodexHolder index
 			(_, Just _) -> mzero
