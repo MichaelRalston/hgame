@@ -286,8 +286,8 @@ function showGamelog(gamelog) {
 }
 
 function handleUpdate(data) {
-	renderScreen(data.screen);
 	data.gamelogs.forEach(showGamelog);
+	renderScreen(data.screen);
 }
 
 $(document).ready(function () {
