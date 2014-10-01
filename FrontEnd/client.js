@@ -198,7 +198,7 @@ function getZone(zoneData) {
 }
 
 function moveIfNeeded($parent, $elem) {
-	if (!$parent.is($elem.parent())) {
+	//if (!$parent.is($elem.parent())) {
 		var atBottom = false;
 		if ($parent.length && $parent.scrollTop() + $parent.innerHeight() + 1 >= $parent[0].scrollHeight) {
 			atBottom = true;
@@ -207,7 +207,7 @@ function moveIfNeeded($parent, $elem) {
 		if (atBottom) {
 			$parent.scrollTop($parent[0].scrollHeight - $parent.innerHeight());
 		}
-	}
+	//}
 }
 
 function placeZone($zone, zoneData) {
