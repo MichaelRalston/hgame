@@ -77,14 +77,14 @@ renderZone
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t exhaustedCards) cards ++ renderTokensForCards tokens cards))
 renderZone (Command specs) t _ p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t []) commandCards ++ renderTokensForCards tokens cards))
-renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
-renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
-	, (if pid == p then (map (renderCard t []) cards) else [cardCounter p t (length cards)])
-	))
   where
 	commandCards = zipWith (\def card -> if card `elem` cards then card else def)
 		(map UtilityCard [Hero_1_Holder .. Hero_3_Holder])
 		(map (\spec -> Card (CodexCard spec Hero) (CI p)) specs)
+renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
+renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
+	, (if pid == p then (map (renderCard t []) cards) else [cardCounter p t (length cards)])
+	))
 	
 renderCard :: CardZoneType -> [Card] -> Card -> ScreenEntity CardEntity
 renderCard t exhaustedCards c@(Card cardType _)  =
@@ -322,7 +322,7 @@ newToken _ c = c -- this is either a move-around or a non-sub-entity.
 
 moveCardEntityDisplay :: CardTableState -> PlayerIndex -> CardEntity -> CardZone -> [Gamelog CardEntity CardZone]
 moveCardEntityDisplay _ pid cardEntity zone@(CZ CZPlay _) = [GLBroadcast [GLMMove [cardEntity] zone, GLMPlayerAction pid ("moved " ++ nameCardEntity cardEntity ++ " to " ++ nameZone zone) CZGamelog]]
-moveCardEntityDisplay s pid (CECard card) (CZ CZCodexHolder px) = if inSigh s card
+moveCardEntityDisplay s pid (CECard card) (CZ CZCodexHolder px) = if inSight s card
 	then [GLBroadcast [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to their codex.") CZGamelog]]
 	else [GLPrivate [px] [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to your codex.") CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to their codex.") CZGamelog]]
 moveCardEntityDisplay s pid (CECard card) zone@(CZ _ px) = if inSight s card
