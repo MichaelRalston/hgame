@@ -90,32 +90,29 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 	SE
 		{ eId = CECard c
 		, eDisplay = cardImage cardType
-		, eSize = case cardType of
-			UtilityCard Hero_1_Holder -> SESPercent 20 33
-			UtilityCard Hero_2_Holder -> SESPercent 20 33
-			UtilityCard Hero_3_Holder -> SESPercent 20 33
-			UtilityCard Tech_3_1_Building -> SESPercent 20 33
-			UtilityCard Tech_3_2_Building -> SESPercent 20 33
-			UtilityCard Tech_3_3_Building -> SESPercent 20 33
-			UtilityCard Tech_2_1_Building -> SESPercent 20 33
-			UtilityCard Tech_2_2_Building -> SESPercent 20 33
-			UtilityCard Tech_2_3_Building -> SESPercent 20 33
-			UtilityCard SurplusBuilding -> SESPercent 20 33
-			UtilityCard Tech_1_Building -> SESPercent 20 33
-			UtilityCard TowerBuilding -> SESPercent 20 33
-			UtilityCard BaseBuilding -> SESPercent 19 95
-			CodexCard _ Hero -> if t == CZPlay then SESAutoWidth 95 else SESPercent 20 33
-			_ ->
-				SESAutoWidth $ 
-				case t of 
-					CZHand -> 95
-					CZPlay -> 44
-					CZDeck -> 95
-					CZDiscard -> 44
-					CZCodex -> 80
-					CZCodexRow -> 80
-					CZPlaymat -> 95
-					CZCodexHolder -> 95
+		, eSize = case (cardType, t) of
+			(UtilityCard Hero_1_Holder, _) -> SESPercent 20 33
+			(UtilityCard Hero_2_Holder, _) -> SESPercent 20 33
+			(UtilityCard Hero_3_Holder, _) -> SESPercent 20 33
+			(UtilityCard Tech_3_1_Building, _) -> SESPercent 20 33
+			(UtilityCard Tech_3_2_Building, _) -> SESPercent 20 33
+			(UtilityCard Tech_3_3_Building, _) -> SESPercent 20 33
+			(UtilityCard Tech_2_1_Building, _) -> SESPercent 20 33
+			(UtilityCard Tech_2_2_Building, _) -> SESPercent 20 33
+			(UtilityCard Tech_2_3_Building, _) -> SESPercent 20 33
+			(UtilityCard SurplusBuilding, _) -> SESPercent 20 33
+			(UtilityCard Tech_1_Building, _) -> SESPercent 20 33
+			(UtilityCard TowerBuilding, _) -> SESPercent 20 33
+			(UtilityCard BaseBuilding, _) -> SESPercent 19 95
+			(CodexCard _ Hero, CZPlaymat) -> SESPercent 20 33
+			(_, CZHand) -> SESAutoWidth 95
+			(_, CZPlay) -> 44
+			(_, CZDeck) -> 95
+			(_, CZDiscard) -> 44
+			(_, CZCodex) -> 80
+			(_, CZCodexRow) -> 80
+			(_, CZPlaymat) -> 95
+			(_, CZCodexHolder) -> 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
 		, eClickable = case cardType of
