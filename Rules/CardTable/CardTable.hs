@@ -350,7 +350,7 @@ moveCard s card (CZ CZHand idx) = (removeSubEntitiesForCard (deleteCard s card) 
 moveCard s card (CZ CZDeck idx) = (removeSubEntitiesForCard (deleteCard s card) card) { decks = insertForIdx (decks $ deleteCard s card) idx card }
 moveCard s card (CZ CZDiscard idx) = (removeSubEntitiesForCard (deleteCard s card) card) { discards = insertForIdx (discards $ deleteCard s card) idx card }
 moveCard s card@(Card (CodexCard _ Hero) _) (CZ CZPlaymat idx) = (removeSubEntitiesForCard (deleteCard s card) card) { heroes = insertForIdx (heroes $ deleteCard s card) idx card }
-moveCard s card@(Card (CodexCard spec _) _) (CZ CZCodexHolder idx) = (removeSubEntitiesForCard (deleteCard s card) card) { codexes = unsafeTwiddleList (codexes $ deleteCard s card) idx (\codex -> (sort $ insertForIdx codex (head $ traceSs $ elemIndices spec ((specs s) !! idx)) card)) }
+moveCard s card@(Card (CodexCard spec _) _) (CZ CZCodexHolder idx) = (removeSubEntitiesForCard (deleteCard s card) card) { codexes = unsafeTwiddleList (codexes $ deleteCard s card) idx (\codex -> (sort $ insertForIdx codex (head $ traceSs "possible spec indices" $ elemIndices spec ((specs s) !! idx)) card)) }
 moveCard s card (CZ CZPlay idx) = (deleteCard s card) { tables = insertForIdx (tables $ deleteCard s card) idx card }
 moveCard s _ _ = s
 
