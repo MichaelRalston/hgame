@@ -24,7 +24,8 @@ function makeClickable($elem, entityId) {
 
 function makeDraggable($elem, entityId, dropOnEntities) {
 	$elem.draggable({
-		helper: function(e) {$(e.currentTarget).clone().height("70%");},
+		helper: function(e) { return $(e.currentTarget).clone().height("70%").width("auto")[0];
+			},
 		opacity: 0.8,
 		revert: true,
 		snap: true
