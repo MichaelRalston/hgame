@@ -25,7 +25,7 @@ withIndexes :: [a] -> [(Int, a)]
 withIndexes list = zip [0..] list
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
-renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
+renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ heroes' ++ codexes' ++ codexrows' ++ gamelog)
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
@@ -34,7 +34,8 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 		  )
 		]
 	discards' = [renderZone (ConcealExcept pid) CZDiscard [] idx discard [] | (idx, discard) <- withIndexes discards]
-	tables' = [renderZone (Show) CZPlay exhaustedCards idx table [] | (idx, table) <- withIndexes tables]
+	tables' = [renderZone (Show) CZPlay exhaustedCards idx table tokens | (idx, table) <- withIndexes tables]
+	heroes' = [renderZone (Command) CZHeroes [] idx table tokens | (idx, table) <- withIndexes heroes]
 	decks' = [renderZone (ConcealAll) CZDeck [] idx deck [] | (idx, deck) <- withIndexes decks]
 	hands' = [renderZone (ConcealExcept pid) CZHand [] idx hand [] | (idx, hand) <- withIndexes hands]
 	codexes' = [renderZone (ConcealExcept pid) CZCodex [] idx codex [] | (idx, codex) <- withIndexes [[], []]]
@@ -42,13 +43,12 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[], droppable=False}, []))]
 	playmats' = concatMap ($ tokens) $ map makePlaymat [0, 1] 
 
-data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
+data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show | Command [CardSpec]
 	
 makePlaymat :: PlayerIndex -> [(Token, Card)] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens =
 	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card (UtilityCard CodexHolder) $ CI pid) {eSize = SESPercent 100 10}]))
-	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) playmatCards ++ 
-		map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card playmatCards) tokens)))
+	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) playmatCards ++ renderTokensForCards tokens playmatCards))
 	]
   where
 	playmatCards =
@@ -64,6 +64,8 @@ makePlaymat pid tokens =
 		, Card (UtilityCard BaseBuilding) $ CI pid
 		]
 	
+renderTokensForCards :: [(Token, Card)] -> [Card] -> [ScreenEntity CardEntity]
+renderTokensForCards tokens cards = map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
 	
 renderZone
 	:: RenderType
@@ -73,14 +75,17 @@ renderZone
 	-> [Card]
 	-> [(Token, Card)]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
-renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t exhaustedCards) cards ++ 
-	map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
-	))
+renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t exhaustedCards) cards ++ renderTokensForCards tokens cards))
+renderZone (Command specs) t _ p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t []) commandCards ++ renderTokensForCards tokens cards))
 renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
 renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
 	, (if pid == p then (map (renderCard t []) cards) else [cardCounter p t (length cards)])
 	))
-
+  where
+	commandCards = zipWith (\def card -> if card `elem` cards then card else def)
+		(map UtilityCard [Hero_1_Holder .. Hero_3_Holder])
+		(map (\spec -> Card (CodexCard spec Hero) (CI p)) specs)
+	
 renderCard :: CardZoneType -> [Card] -> Card -> ScreenEntity CardEntity
 renderCard t exhaustedCards c@(Card cardType _)  =
 	SE
@@ -100,6 +105,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			UtilityCard Tech_1_Building -> SESPercent 33 33
 			UtilityCard TowerBuilding -> SESPercent 33 33
 			UtilityCard BaseBuilding -> SESPercent 25 95
+			CodexCard _ Hero -> if t == CZPlay then SESAutoWidth 95 else SESPercent 95 33
 			_ ->
 				SESAutoWidth $ 
 				case t of 
@@ -111,7 +117,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 					CZCodexRow -> 80
 					CZPlaymat -> 95
 					CZCodexHolder -> 95
-		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
+		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat, CZHeroes]
 		, eDropOnEntities = False
 		, eClickable = case cardType of
 			UtilityCard BlankCard -> True
@@ -151,10 +157,10 @@ zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay p
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = True}
 zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card (UtilityCard CodexHolder) $ CI pid, order=pid*20+6, classNames = [], droppable = False}
 zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 7, classNames = ["display-inline", "margin-onepx", "stretch-horiz"], droppable = False}
+zoneDisplay CZHeroes pid = ZDD {display = ZDNested (ZDHorizFill 20) (CZ CZPlaymat pid), order = pid*10+7, classNames = ["display-inline", "margin-onepx"]}
 
 
 nameCard :: Card -> String
-nameCard card = show card
 nameCard (Card (SDCard NeutralColor SDCard0) _) = "Timely Messenger"
 nameCard (Card (SDCard NeutralColor SDCard1) _) = "Younger Brother"
 nameCard (Card (SDCard NeutralColor SDCard2) _) = "Older Brother"
@@ -195,6 +201,8 @@ nameCard (Card (CodexCard Fire Hero) _) = "Jaina Stormborne"
 nameCard (Card (CodexCard Balance Hero) _) = "Master Midori"
 nameCard (Card (CodexCard Feral Hero) _) = "Calamandra Moss"
 nameCard (Card (CodexCard Growth Hero) _) = "Argagarg Garg"
+
+nameCard card = show card
 
 cardImage :: CardIdentifier -> ScreenDisplay
 cardImage (SDCard NeutralColor SDCard0) = SDImage "images/cards/__0002_timely%20messenger.jpg"
@@ -301,7 +309,7 @@ inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case
 	_ -> (s, [], [])
 inputHandler s _ (UIClick (CEToken _)) = return (s, [], []) -- TODO: click on the underlying?
 inputHandler s _ (UIDragEntity _ (CEToken _)) = return (s, [], []) -- TODO: pass to the underlying?
-inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if inPlay s card
+inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if inSight s card
 	then (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
 	else (s, [], [])
 inputHandler s _ (UIDragEntity (CEToken _) (CECard (Card (UtilityCard CodexHolder) _))) = return (s, [], [])
@@ -314,10 +322,10 @@ newToken _ c = c -- this is either a move-around or a non-sub-entity.
 
 moveCardEntityDisplay :: CardTableState -> PlayerIndex -> CardEntity -> CardZone -> [Gamelog CardEntity CardZone]
 moveCardEntityDisplay _ pid cardEntity zone@(CZ CZPlay _) = [GLBroadcast [GLMMove [cardEntity] zone, GLMPlayerAction pid ("moved " ++ nameCardEntity cardEntity ++ " to " ++ nameZone zone) CZGamelog]]
-moveCardEntityDisplay s pid (CECard card) (CZ CZCodexHolder px) = if inPlay s card
+moveCardEntityDisplay s pid (CECard card) (CZ CZCodexHolder px) = if inSigh s card
 	then [GLBroadcast [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to their codex.") CZGamelog]]
 	else [GLPrivate [px] [GLMPlayerAction pid ("moved " ++ nameCard card ++ " to your codex.") CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to their codex.") CZGamelog]]
-moveCardEntityDisplay s pid (CECard card) zone@(CZ _ px) = if inPlay s card
+moveCardEntityDisplay s pid (CECard card) zone@(CZ _ px) = if inSight s card
 	then [GLBroadcast [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog]]
 	else [GLPrivate [px] [GLMMove (map CECard [card]) zone, GLMPlayerAction pid ("moved " ++ nameCard card ++ " to " ++ nameZone zone) CZGamelog], GLAllBut [px] [GLMPlayerAction pid ("moved a card to " ++ nameZone zone) CZGamelog]]
 moveCardEntityDisplay _ _ _ _ = [] -- move fails for this.
@@ -331,6 +339,9 @@ removeToken s se = s {tokens = filter ((/= se) . fst) (tokens s)}
 
 inPlay :: CardTableState -> Card -> Bool
 inPlay s card = True `elem` map (elem card) (tables s)
+
+inSight :: CardTableState -> Card -> Bool
+inSight s card = inPlay s card || (True `elem` map (elem card) (heroes s))
 
 inCodex :: CardTableState -> Card -> Bool
 inCodex s card = True `elem` map (elem card) (concat $ codexes s)
