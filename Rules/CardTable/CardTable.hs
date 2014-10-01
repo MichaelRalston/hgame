@@ -106,13 +106,13 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			(UtilityCard BaseBuilding, _) -> SESPercent 19 95
 			(CodexCard _ Hero, CZPlaymat) -> SESPercent 20 33
 			(_, CZHand) -> SESAutoWidth 95
-			(_, CZPlay) -> 44
-			(_, CZDeck) -> 95
-			(_, CZDiscard) -> 44
-			(_, CZCodex) -> 80
-			(_, CZCodexRow) -> 80
-			(_, CZPlaymat) -> 95
-			(_, CZCodexHolder) -> 95
+			(_, CZPlay) -> SESAutoWidth 44
+			(_, CZDeck) -> SESAutoWidth 95
+			(_, CZDiscard) -> SESAutoWidth 44
+			(_, CZCodex) -> SESAutoWidth 80
+			(_, CZCodexRow) -> SESAutoWidth 80
+			(_, CZPlaymat) -> SESAutoWidth 95
+			(_, CZCodexHolder) -> SESAutoWidth 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
 		, eClickable = case cardType of
