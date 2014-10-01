@@ -273,7 +273,7 @@ function showGamelog(gamelog) {
 			break;
 		case 'move':
 			function move(entityId) {
-				moveEntityToZone(entityId, gamelog.move.zone);
+				//moveEntityToZone(entityId, gamelog.move.zone);
 			}
 			gamelog.move.entities.forEach(move);
 			break;
