@@ -289,7 +289,7 @@ selectSpec s@(CTS{codexes, specs, decks, rng, heroes}) spec pid = case length (s
 		(newDecks, newRng) = addStartingDeck decks rng pid $ colorOfSpec spec
 	3 -> (s, [], [])
 	_ ->
-		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec}
+		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec, heroes = unsafeTwiddleList heroes pid (++ [Card (CodexCard spec Hero) (CI pid)])}
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec.") CZGamelog]]
 		, []
 		)
