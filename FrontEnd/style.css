@@ -92,3 +92,7 @@ img {
 .ui-dialog {
 	background: black;
 }
+
+.ui-draggable-dragging {
+	z-index: 50;
+}

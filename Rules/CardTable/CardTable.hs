@@ -89,20 +89,20 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 		{ eId = CECard c
 		, eDisplay = cardImage cardType
 		, eSize = case cardType of
-			UtilityCard Hero_1_Holder -> SESPercent 95 33
-			UtilityCard Hero_2_Holder -> SESPercent 95 33
-			UtilityCard Hero_3_Holder -> SESPercent 95 33
+			UtilityCard Hero_1_Holder -> SESPercent 20 33
+			UtilityCard Hero_2_Holder -> SESPercent 20 33
+			UtilityCard Hero_3_Holder -> SESPercent 20 33
 			UtilityCard Tech_3_1_Building -> SESPercent 20 33
 			UtilityCard Tech_3_2_Building -> SESPercent 20 33
 			UtilityCard Tech_3_3_Building -> SESPercent 20 33
 			UtilityCard Tech_2_1_Building -> SESPercent 20 33
 			UtilityCard Tech_2_2_Building -> SESPercent 20 33
 			UtilityCard Tech_2_3_Building -> SESPercent 20 33
-			UtilityCard SurplusBuilding -> SESPercent 33 33
-			UtilityCard Tech_1_Building -> SESPercent 33 33
-			UtilityCard TowerBuilding -> SESPercent 33 33
-			UtilityCard BaseBuilding -> SESPercent 25 95
-			CodexCard _ Hero -> if t == CZPlay then SESAutoWidth 95 else SESPercent 95 33
+			UtilityCard SurplusBuilding -> SESPercent 20 33
+			UtilityCard Tech_1_Building -> SESPercent 20 33
+			UtilityCard TowerBuilding -> SESPercent 20 33
+			UtilityCard BaseBuilding -> SESPercent 19 95
+			CodexCard _ Hero -> if t == CZPlay then SESAutoWidth 95 else SESPercent 20 33
 			_ ->
 				SESAutoWidth $ 
 				case t of 
