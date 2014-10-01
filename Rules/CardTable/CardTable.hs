@@ -10,7 +10,7 @@ import System.Random (StdGen)
 import qualified Data.Map as Map
 import Safe (atMay)
 import System.Random (randomR)
-import Data.List (delete, elemIndices, sort)
+import Data.List (delete, elemIndices, sort, zipWith4)
 import Control.Applicative ((<$>))
 
 {- TODO LIST:
@@ -40,14 +40,14 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
 	codexes' = [renderZone (ConcealExcept pid) CZCodex [] idx codex [] | (idx, codex) <- withIndexes [[], []]]
 	codexrows' = [renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx codexRow [] | (idx, codexRow) <- withIndexes $ concat codexes]
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[], droppable=False}, []))]
-	playmats' = zipWith4 makePlaymat makePlaymat [0, 1] (replicate tokens) heroes specs
+	playmats' = concat $ zipWith4 makePlaymat [0, 1] (repeat tokens) heroes specs
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 	
 makePlaymat :: PlayerIndex -> [(Token, Card)] -> [Card] -> [CardSpec] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens heroes specs =
 	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card (UtilityCard CodexHolder) $ CI pid) {eSize = SESPercent 100 10}]))
-	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, commandCards ++ map (renderCard CZPlaymat []) playmatCards ++ renderTokensForCards tokens (playmatCards ++ heroes)))
+	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) (commandCards ++ playmatCards) ++ renderTokensForCards tokens (playmatCards ++ heroes)))
 	]
   where
 	playmatCards =
@@ -63,8 +63,8 @@ makePlaymat pid tokens heroes specs =
 		, Card (UtilityCard BaseBuilding) $ CI pid
 		]
 	commandCards = zipWith (\def card -> if card `elem` heroes then card else def)
-		(map (\card -> Card (UtilityCard card) (CI p)) [Hero_1_Holder .. Hero_3_Holder])
-		(map (\spec -> Card (CodexCard spec Hero) (CI p)) specs)
+		(map (\card -> Card (UtilityCard card) (CI pid)) [Hero_1_Holder .. Hero_3_Holder])
+		(map (\spec -> Card (CodexCard spec Hero) (CI pid)) specs)
 	
 renderTokensForCards :: [(Token, Card)] -> [Card] -> [ScreenEntity CardEntity]
 renderTokensForCards tokens cards = map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
@@ -359,7 +359,7 @@ deleteCard s card = s
 	, discards = map (delete card) $ discards s
 	, decks = map (delete card) $ decks s
 	, codexes = [map (delete card) codex | codex <- codexes s]
-	, heroes = map delete card $ heroes s
+	, heroes = map (delete card) $ heroes s
 	}
 	
 removeSubEntitiesForCard :: CardTableState -> Card -> CardTableState
