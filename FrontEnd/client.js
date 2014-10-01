@@ -86,7 +86,7 @@ function makeEntityElement(entityJson) {
 
 function styleEntity($elem, entityJson) {
 	$elem[0].className.split(/\s+/).forEach(function(cl) {
-		if (cl != 'entity' && cl != 'has-nesting') {
+		if (cl != 'entity' && cl != 'has-nesting' && cl.substring(0,3) != "ui-") {
 			$elem.removeClass(cl);
 		}
 	});
