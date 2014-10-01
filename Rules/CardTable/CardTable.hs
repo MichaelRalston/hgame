@@ -25,7 +25,7 @@ withIndexes :: [a] -> [(Int, a)]
 withIndexes list = zip [0..] list
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
-renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ heroes' ++ codexes' ++ codexrows' ++ gamelog)
+renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, heroes, specs}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ heroes' ++ codexes' ++ codexrows' ++ gamelog)
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
@@ -35,7 +35,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards})
 		]
 	discards' = [renderZone (ConcealExcept pid) CZDiscard [] idx discard [] | (idx, discard) <- withIndexes discards]
 	tables' = [renderZone (Show) CZPlay exhaustedCards idx table tokens | (idx, table) <- withIndexes tables]
-	heroes' = [renderZone (Command) CZHeroes [] idx table tokens | (idx, table) <- withIndexes heroes]
+	heroes' = [renderZone (Command spec) CZHeroes [] idx commandZone tokens | (idx, (commandZone, spec)) <- withIndexes $ zip heroes specs]
 	decks' = [renderZone (ConcealAll) CZDeck [] idx deck [] | (idx, deck) <- withIndexes decks]
 	hands' = [renderZone (ConcealExcept pid) CZHand [] idx hand [] | (idx, hand) <- withIndexes hands]
 	codexes' = [renderZone (ConcealExcept pid) CZCodex [] idx codex [] | (idx, codex) <- withIndexes [[], []]]
@@ -79,7 +79,7 @@ renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map
 renderZone (Command specs) t _ p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t []) commandCards ++ renderTokensForCards tokens cards))
   where
 	commandCards = zipWith (\def card -> if card `elem` cards then card else def)
-		(map UtilityCard [Hero_1_Holder .. Hero_3_Holder])
+		(map (\card -> Card (UtilityCard card) (CI p)) [Hero_1_Holder .. Hero_3_Holder])
 		(map (\spec -> Card (CodexCard spec Hero) (CI p)) specs)
 renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
 renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
@@ -117,6 +117,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 					CZCodexRow -> 80
 					CZPlaymat -> 95
 					CZCodexHolder -> 95
+					CZHeroes -> 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat, CZHeroes]
 		, eDropOnEntities = False
 		, eClickable = case cardType of
@@ -157,7 +158,7 @@ zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay p
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = True}
 zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card (UtilityCard CodexHolder) $ CI pid, order=pid*20+6, classNames = [], droppable = False}
 zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 7, classNames = ["display-inline", "margin-onepx", "stretch-horiz"], droppable = False}
-zoneDisplay CZHeroes pid = ZDD {display = ZDNested (ZDHorizFill 20) (CZ CZPlaymat pid), order = pid*10+7, classNames = ["display-inline", "margin-onepx"]}
+zoneDisplay CZHeroes pid = ZDD {display = ZDNested (ZDHorizFill 20) (CZ CZPlaymat pid), order = pid*10+7, classNames = ["display-inline", "margin-onepx"], droppable = True}
 
 
 nameCard :: Card -> String
@@ -278,9 +279,9 @@ addSpec :: [[CardSpec]] -> PlayerIndex -> CardSpec -> [[CardSpec]]
 addSpec specs pid spec = unsafeTwiddleList specs pid (++ [spec])
 
 selectSpec :: CardTableState -> CardSpec -> PlayerIndex -> GameDelta CardTableState CardEntity CardZone
-selectSpec s@(CTS{codexes, specs, decks, rng}) spec pid = case length (specs !! pid) of
+selectSpec s@(CTS{codexes, specs, decks, rng, heroes}) spec pid = case length (specs !! pid) of
 	0 ->
-		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec, decks = newDecks, rng = newRng}
+		( s {codexes = addSpecToCodex codexes pid spec, specs = addSpec specs pid spec, decks = newDecks, rng = newRng, heroes = unsafeTwiddleList heroes pid (++ [Card (CodexCard spec Hero) (CI pid)])}
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec, giving them the " ++ nameColor (colorOfSpec spec) ++ " starting deck.") CZGamelog]]
 		, []
 		)
@@ -424,6 +425,7 @@ makeCardTable generator = do
 		, codexes = [[[], [], []], [[], [], []]]
 		, exhaustedCards = []
 		, specs = [[], []]
+		, heroes = [[], []]
 		, rng = generator
 		}		
 	return Game
