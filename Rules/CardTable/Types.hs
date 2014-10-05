@@ -37,6 +37,7 @@ data CardTableState = CTS
 	, exhaustedCards :: [Card]
 	, specs :: [[CardSpec]]
 	, heroes :: [[Card]]
+	, workers :: [[Card]]
 	, rng :: StdGen
 	}
 	
@@ -55,6 +56,7 @@ data CardZoneType
 	| CZCodexRow
 	| CZCodexHolder
 	| CZPlaymat
+	| CZWorkers
 	deriving (Show, Eq, Ord, Enum)
 	
 instance ZoneId CardZone
@@ -66,6 +68,7 @@ instance ToJSON CardZone where
 	toJSON (CZ CZDiscard idx) = String $ pack $ "discard-" ++ show idx
 	toJSON (CZ CZCodex idx) = String $ pack $ "codex-" ++ show idx
 	toJSON (CZ CZCodexRow idx) = String $ pack $ "codexrow-" ++ show idx
+	toJSON (CZ CZWorkers idx) = String $ pack $ "workers-" ++ show idx
 	toJSON (CZ CZCodexHolder idx) = String $ pack $ "codexholder-" ++ show idx
 	toJSON (CZ CZPlaymat idx) = String $ pack $ "playmat-" ++ show idx
 	toJSON (CZGamelog) = String $ pack $ "gamelog"
@@ -84,6 +87,7 @@ instance FromJSON CardZone where
 			("codex", Just index) -> return $ CZ CZCodex index
 			("playmat", Just index) -> return $ CZ CZPlaymat index
 			("codexrow", Just index) -> return $ CZ CZCodexRow index
+			("workers", Just index) -> return $ CZ CZWorkers index
 			("codexholder", Just index) -> return $ CZ CZCodexHolder index
 			(_, Just _) -> mzero
 		  where

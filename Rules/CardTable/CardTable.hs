@@ -27,7 +27,7 @@ withIndexes :: [a] -> [(Int, a)]
 withIndexes list = zip [0..] list
 
 renderer :: CardTableState -> PlayerIndex -> Screen CardZone CardEntity
-renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, heroes, specs}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ gamelog)
+renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, heroes, specs, workers}) pid = Map.fromList (tokens' ++ hands' ++ decks' ++ tables' ++ discards' ++ playmats' ++ codexes' ++ codexrows' ++ workers' ++ gamelog)
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
@@ -41,6 +41,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
 	hands' = [renderZone (ConcealExcept pid) CZHand [] idx hand [] | (idx, hand) <- withIndexes hands]
 	codexes' = [renderZone (ConcealExcept pid) CZCodex [] idx codex [] | (idx, codex) <- withIndexes [[], []]]
 	codexrows' = [renderZone (ConcealExcept $ (pid*3) + (idx `mod` 3)) CZCodexRow [] idx codexRow [] | (idx, codexRow) <- withIndexes $ concat codexes]
+	workers' = [renderZone (ConcealAll) CZWorkers [] idx workerZone [] | (idx, workerZone) <- withIndexes workers]
 	gamelog = [(CZGamelog, (ZDD {display=ZDRight 20, order= -100, classNames=[], droppable=False}, []))]
 	playmats' = concat $ zipWith4 makePlaymat [0, 1] (repeat tokens) heroes specs
 
@@ -145,14 +146,15 @@ cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
 cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eClickable = True, eDraggable = False, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
-zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+6, classNames = ["margin-onepx", "bordered"], droppable = True}
+zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+7 classNames = ["margin-onepx", "bordered"], droppable = True}
 zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 35, order=pid*10+2, classNames = ["display-inline", "margin-onepx"], droppable = True}
 zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+3, classNames = [], droppable = True}
-zoneDisplay CZPlaymat pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+4, classNames = [], droppable = True}
-zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+5, classNames = [], droppable = True}
+zoneDisplay CZWorkers pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+4, classNames = [], droppable = True}
+zoneDisplay CZPlaymat pid = ZDD {display = ZDNested (ZDLeft 20) (CZ CZPlay pid), order=pid*10+5, classNames = [], droppable = True}
+zoneDisplay CZCodexHolder pid = ZDD {display = ZDNested (ZDRight 5) (CZ CZPlay pid), order=pid*10+6, classNames = [], droppable = True}
 zoneDisplay CZHand pid = ZDD {display = ZDHorizFill 10, order=pid*20, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = True}
-zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card (UtilityCard CodexHolder) $ CI pid, order=pid*20+6, classNames = [], droppable = False}
-zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 7, classNames = ["display-inline", "margin-onepx", "stretch-horiz"], droppable = False}
+zoneDisplay CZCodex pid = ZDD {display = ZDShelf $ CECard $ Card (UtilityCard CodexHolder) $ CI pid, order=pid*20+8, classNames = [], droppable = False}
+zoneDisplay CZCodexRow pid = ZDD {display = ZDNested (ZDHorizFill 33) (CZ CZCodex $ pid `div` 3), order=(pid `div` 3)*20+(pid `mod` 3) + 9, classNames = ["display-inline", "margin-onepx", "stretch-horiz"], droppable = False}
 
 
 nameCard :: Card -> String
@@ -422,6 +424,7 @@ makeCardTable generator = do
 		, exhaustedCards = []
 		, specs = [[], []]
 		, heroes = [[], []]
+		, workers = [[UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard], [UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard]]
 		, rng = generator
 		}		
 	return Game
