@@ -114,6 +114,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			(_, CZCodexRow) -> SESAutoWidth 80
 			(_, CZPlaymat) -> SESAutoWidth 95
 			(_, CZCodexHolder) -> SESAutoWidth 95
+			(_, CZWorkers) -> SESAutoWidth 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
 		, eClickable = case cardType of
@@ -146,7 +147,7 @@ cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
 cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eClickable = True, eDraggable = False, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
-zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+7 classNames = ["margin-onepx", "bordered"], droppable = True}
+zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+7, classNames = ["margin-onepx", "bordered"], droppable = True}
 zoneDisplay CZPlay pid = ZDD {display = ZDHorizFill 35, order=pid*10+2, classNames = ["display-inline", "margin-onepx"], droppable = True}
 zoneDisplay CZDeck pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+3, classNames = [], droppable = True}
 zoneDisplay CZWorkers pid = ZDD {display = ZDNested (ZDLeft 10) (CZ CZPlay pid), order=pid*10+4, classNames = [], droppable = True}
@@ -424,7 +425,7 @@ makeCardTable generator = do
 		, exhaustedCards = []
 		, specs = [[], []]
 		, heroes = [[], []]
-		, workers = [[UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard], [UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard,UtilityCard BlankCard]]
+		, workers = [[Card (UtilityCard BlankCard) (CI 40),Card (UtilityCard BlankCard) (CI 41),Card (UtilityCard BlankCard) (CI 42),Card (UtilityCard BlankCard) (CI 43)], [Card (UtilityCard BlankCard) (CI 44),Card (UtilityCard BlankCard) (CI 45),Card (UtilityCard BlankCard) (CI 46),Card (UtilityCard BlankCard) (CI 47)]]
 		, rng = generator
 		}		
 	return Game
