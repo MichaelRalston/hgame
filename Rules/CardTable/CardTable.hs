@@ -130,10 +130,15 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 		}
 
 renderToken :: Maybe Card -> Token -> ScreenEntity CardEntity
-renderToken card token =
+renderToken card (Token tokenType _) =
 	SE
 		{ eId = CEToken token
-		, eDisplay = SDImage "images/placeholder.jpg"
+		, eDisplay = case tokenType of
+			Gold -> SDImage "images/tokens/Gold.png"
+			PlusOne -> SDImage "images/tokens/ATKDEFRune1.png"
+			MinusOne -> SDImage "images/tokens/ATKDEFRune2.png"
+			Cooldown -> SDImage "images/tokens/Cooldown.png"
+			_ -> SDImage "images/placeholder.jpg"
 		, eSize = SESAutoWidth 23
 		, eEntitiesDropOn = False
 		, eDropOnEntities = True
@@ -420,9 +425,21 @@ cardImage (CodexCard Balance Hero) = SDImage "images/cards/_0003_balance%20hero.
 cardImage (CodexCard Feral Hero) = SDImage "images/cards/_0004_feral%20hero.jpg"
 cardImage (CodexCard Growth Hero) = SDImage "images/cards/_0005_growth%20hero.jpg"
 
+cardImage (CodexCard NeutralSpec SpecToken) = SDImage "images/tokens/beigebutton.png"
+cardImage (CodexCard Anarchy SpecToken) = SDImage "images/tokens/anarchybutton.png"
+cardImage (CodexCard Balance SpecToken) = SDImage "images/tokens/balancebutton.png"
+cardImage (CodexCard Blood SpecToken) = SDImage "images/tokens/bloodbutton.png"
+cardImage (CodexCard Feral SpecToken) = SDImage "images/tokens/feralbutton.png"
+cardImage (CodexCard Fire SpecToken) = SDImage "images/tokens/firebutton.png"
+cardImage (CodexCard Growth SpecToken) = SDImage "images/tokens/growthbutton.png"
+
 cardImage _ = SDImage "images/placeholder.jpg"
 
 nameToken :: Token -> String
+nameToken (Token Gold _) = "gold token"
+nameToken (Token PlusOne _) = "+1/+1 token"
+nameToken (Token MinusOne _) = "-1/-1 token"
+nameToken (Token Cooldown _) = "cooldown token"
 nameToken token = show token
 
 nameZone :: CardZone -> String
