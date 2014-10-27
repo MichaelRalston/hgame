@@ -32,7 +32,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
 			, [renderToken Nothing $ Token tokenType $ TI 0 | tokenType <- [Gold .. Sword]]
-			++ [renderCard CZPlaymat [] $ Card (CodexCard spec SpecToken) $ CI 0 | spec <- [NeutralSpec .. Demonology]] )
+			++ [renderCard CZDiscard [] $ Card (CodexCard spec SpecToken) $ CI 0 | spec <- [NeutralSpec .. Demonology]] )
 		  )
 		]
 	discards' = [renderZone (ConcealExcept pid) CZDiscard [] idx discard [] | (idx, discard) <- withIndexes discards]
