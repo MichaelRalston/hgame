@@ -130,7 +130,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 		}
 
 renderToken :: Maybe Card -> Token -> ScreenEntity CardEntity
-renderToken card (Token tokenType _) =
+renderToken card token@(Token tokenType _) =
 	SE
 		{ eId = CEToken token
 		, eDisplay = case tokenType of
