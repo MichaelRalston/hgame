@@ -135,7 +135,7 @@ renderToken card token@(Token tokenType _) =
 		{ eId = CEToken token
 		, eDisplay = case tokenType of
 			Gold -> SDImage "images/tokens/Gold.png"
-			PlusOne -> SDImage "images/tokens/ATKDEFRune1.png"
+			PlusOne -> SDImage "images/tokens/ATKDEFRune.png"
 			MinusOne -> SDImage "images/tokens/ATKDEFRune2.png"
 			Cooldown -> SDImage "images/tokens/Cooldown.png"
 			_ -> SDImage "images/placeholder.jpg"
