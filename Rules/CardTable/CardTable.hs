@@ -126,7 +126,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			CodexCard _ SpecToken -> False
 			_ -> True
 		, eNestOnEntity = Nothing
-		, eClasses = if c `elem` exhaustedCards then ["rotate90"] else []
+		, eClasses = if c `elem` exhaustedCards then ["greyscale"] else []
 		}
 
 renderToken :: Maybe Card -> Token -> ScreenEntity CardEntity
