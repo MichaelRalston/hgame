@@ -60,7 +60,7 @@ function makeEntityElement(entityJson) {
 			}
 			if (entityJson.draggable) {
 				makeDraggable($elem, entityJson.entityId, entityJson.dropOnEntities);
-			}		
+			}
 			break;
 		case 'text':
 			var $elem = $('<div class="entity" id="entity-'+entityJson.entityId+'" class="textEntity"></div>');
@@ -127,10 +127,10 @@ function entityElement(entityJson) {
 	console.log("Rendering entity", entityJson.entityId);
 	var $elem = $('#entity-' + entityJson.entityId);
 	if ($elem.length == 0) {
-		$elem = makeEntityElement(entityJson);	
+		$elem = makeEntityElement(entityJson);
 	}
 	styleEntity($elem, entityJson);
-	return $elem;		
+	return $elem;
 }
 
 function moveEntityToZone(entityId, zoneId) {
@@ -167,7 +167,7 @@ function makeZone(zoneId, displayData) {
 			break;
 		default: // todo: implement.
 			alert("Unimplemented zone type " + displayData.type);
-			$zone = $('#id_that_does_not_exist_ever');			
+			$zone = $('#id_that_does_not_exist_ever');
 	}
 	return $zone;
 }
@@ -178,7 +178,7 @@ function getZone(zoneData) {
 	if ($zone.length == 0) {
 		$zone = makeZone(zoneId, zoneData.display.display);
 		if (zoneData.display.droppable) {
-			$zone.droppable({			
+			$zone.droppable({
 				drop: function(event, ui) {
 					if (!$zone.is(ui.draggable.parent())) {
 						var id = ui.draggable.attr('id');
@@ -214,10 +214,15 @@ function moveIfNeeded($parent, $elem) {
 function placeZone($zone, zoneData) {
 	switch (zoneData.display.display.type) {
 		case "nested":
-			$parent = $('#zone-'+zoneData.display.display.zone);			
+			$parent = $('#zone-'+zoneData.display.display.zone);
 			break;
 		case "shelf":
 			return;
+    case "absolute":
+			$parent = $('body');
+      $zone.css('left', zoneData.display.display.left + '%');
+      $zone.css('top', zoneData.display.display.top + '%');
+      $zone.css('position', 'absolute');
 		default:
 			$parent = $('body');
 			break;
@@ -258,12 +263,12 @@ function renderScreen(screen) {
 		if (zoneIds.indexOf($(this).attr('id')) === -1) {
 			$(this).remove();
 		}
-	});	
+	});
 	$('.entity').each(function() {
 		if (entityIds.indexOf($(this).attr('id')) === -1) {
 			$(this).remove();
 		}
-	});	
+	});
 }
 
 function showGamelog(gamelog) {

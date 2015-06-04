@@ -5,7 +5,7 @@ module Rules.Lobby
 	, addPlayer
 	, LobbyState
 	) where
-	
+
 import qualified Engine.Types as ET
 import qualified Engine.Mechanics as EM
 import Control.Concurrent.MVar (newMVar, MVar)
@@ -43,10 +43,10 @@ finished :: LobbyState -> Bool
 finished _ = False
 
 playerRenderer :: LobbyState -> ET.PlayerIndex -> ET.Screen Int Int
-playerRenderer _ _ = Map.fromList 
-	[ (dataZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=0, ET.classNames = [], ET.droppable = False},[ET.SE 1 (ET.SDText "MAEK GAEM") (ET.SESAutoWidth 95) False False False True [] Nothing]))
+playerRenderer _ _ = Map.fromList
+	[ (dataZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=0, ET.classNames = [], ET.droppable = False},[ET.SE 1 (ET.SDText "MAEK GAEM") (ET.SESAutoWidth 95) Nothing False False False True [] Nothing]))
 	, (gamelogZone, (ET.ZDD {ET.display = ET.ZDHorizFill 90, ET.order=1, ET.classNames = [], ET.droppable = False},[]))
-	, (inputZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=2, ET.classNames = [], ET.droppable = False},[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) False False False True [] Nothing]))
+	, (inputZone, (ET.ZDD {ET.display = ET.ZDHorizFill 5, ET.order=2, ET.classNames = [], ET.droppable = False},[ET.SE 0 ET.SDTextInput (ET.SESPercent 100 100) Nothing False False False True [] Nothing]))
 	]
 
 getPlayers :: LobbyState -> [ET.PlayerIndex]
@@ -75,7 +75,7 @@ data LobbyState = LobbyState
 	, gameMap :: GameMap
 	, selfId :: Maybe ET.GameId
 	}
-	
+
 instance ET.GameState LobbyState
 
 instance ET.EntityId Int

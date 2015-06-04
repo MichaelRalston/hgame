@@ -19,7 +19,7 @@ import Engine.Debug
 	- Real images!
 	- Hero zone.
 	- Worker zone.
-	
+
 	- Replace the awful map-chaining in the renderer with list comprehensions.
 -}
 
@@ -46,7 +46,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
 	playmats' = concat $ zipWith4 makePlaymat [0, 1] (repeat tokens) heroes specs
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
-	
+
 makePlaymat :: PlayerIndex -> [(Token, Card)] -> [Card] -> [CardSpec] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens heroes specs =
 	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card (UtilityCard CodexHolder) $ CI pid) {eSize = SESPercent 100 10}]))
@@ -68,10 +68,10 @@ makePlaymat pid tokens heroes specs =
 	commandCards = zipWith (\def card -> if card `elem` heroes then card else def)
 		(map (\card -> Card (UtilityCard card) (CI pid)) [Hero_1_Holder .. Hero_3_Holder])
 		(map (\spec -> Card (CodexCard spec Hero) (CI pid)) specs)
-	
+
 renderTokensForCards :: [(Token, Card)] -> [Card] -> [ScreenEntity CardEntity]
 renderTokensForCards tokens cards = map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
-	
+
 renderZone
 	:: RenderType
 	-> CardZoneType
@@ -85,7 +85,7 @@ renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p 
 renderZone (ConcealExcept pid) t _ p cards _ = (CZ t p, (zoneDisplay t p
 	, (if pid == p then (map (renderCard t []) cards) else [cardCounter p t (length cards)])
 	))
-	
+
 renderCard :: CardZoneType -> [Card] -> Card -> ScreenEntity CardEntity
 renderCard t exhaustedCards c@(Card cardType _)  =
 	SE
@@ -117,6 +117,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			(_, CZWorkers) -> SESAutoWidth 95
 		, eEntitiesDropOn = elem t [CZPlay, CZPlaymat]
 		, eDropOnEntities = False
+		, ePosition = Nothing
 		, eClickable = case cardType of
 			UtilityCard BlankCard -> True
 			UtilityCard _ -> False
@@ -140,6 +141,7 @@ renderToken card token@(Token tokenType _) =
 			Cooldown -> SDImage "images/tokens/Cooldown.png"
 			_ -> SDImage "images/placeholder.jpg"
 		, eSize = SESAutoWidth 23
+		, ePosition = Nothing
 		, eEntitiesDropOn = False
 		, eDropOnEntities = True
 		, eDraggable = True
@@ -147,9 +149,9 @@ renderToken card token@(Token tokenType _) =
 		, eNestOnEntity = CECard <$> card
 		, eClasses = ["rotate180"] -- TODO: replace with real things?
 		}
-		
+
 cardCounter :: PlayerIndex -> CardZoneType -> Int -> ScreenEntity CardEntity
-cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eClickable = True, eDraggable = False, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing}
+cardCounter p t count = SE { eId = CECard $ Card (UtilityCard BlankCard) $ CI (p*1000 + (fromEnum t)*100), eDisplay = SDText $ show count ++ " CARDS", eSize = SESAutoWidth (if t == CZDiscard then 22 else 95), eClickable = True, eDraggable = False, eEntitiesDropOn = False, eDropOnEntities = False, eClasses = [], eNestOnEntity = Nothing, ePosition = Nothing}
 
 zoneDisplay :: CardZoneType -> PlayerIndex -> ZoneDisplayData CardZone CardEntity
 zoneDisplay CZDiscard pid = ZDD {display=ZDNested (ZDRight 20) (CZ CZPlay pid), order=pid*10+7, classNames = ["margin-onepx", "bordered"], droppable = True}
@@ -483,7 +485,7 @@ selectSpec s@(CTS{codexes, specs, decks, rng, heroes}) spec pid = case length (s
 		, [GLBroadcast [GLMPlayerAction pid ("chose the " ++ nameSpec spec ++ " spec.") CZGamelog]]
 		, []
 		)
-		
+
 inputHandler :: InputHandler CardTableState CardEntity CardZone
 inputHandler s _ UIConnected = return (s, [], [])
 inputHandler s _ (UIClick (CECard (Card (UtilityCard BlankCard) (CI bidx)))) = return $ processClick s (toEnum $ bidx `mod` 1000 `div` 100) (bidx `div` 1000)
@@ -491,7 +493,7 @@ inputHandler s pid (UIClick (CECard (Card (CodexCard spec SpecToken) _))) = retu
 inputHandler s _ (UIDrag (CECard (Card (UtilityCard BlankCard) _)) _) = return (s, [], [])
 inputHandler s pid (UIDrag cardEntity@(CECard card) zone) = return (moveCard s card zone, moveCardEntityDisplay s pid cardEntity zone, [])
 inputHandler s pid (UIDrag ce@(CEToken token) zone) = return (removeToken s token, moveCardEntityDisplay s pid ce zone, [])
-inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case (inPlay s card, inCodex s card) of 
+inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case (inPlay s card, inCodex s card) of
 	(True, _) -> ( s { exhaustedCards = if card `elem` exhaustedCards then delete card exhaustedCards else card:exhaustedCards }
 		 , [GLBroadcast [GLMPlayerAction pid ((if card `elem` exhaustedCards then "readied " else "exhausted ") ++ nameCard card) CZGamelog]]
 		 , []
@@ -506,7 +508,7 @@ inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if i
 inputHandler s _ (UIDragEntity (CEToken _) (CECard (Card (UtilityCard CodexHolder) _))) = return (s, [], [])
 inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
 inputHandler s _ (UIDragEntity (CECard _) (CECard _)) = return (s, [], [])
-	
+
 newToken :: CardTableState -> Token -> Token
 newToken s (Token subEntityType (TI 0)) = head $ filter (\se -> all ((/= se) . fst) $ tokens s) $ map (Token subEntityType) $ map TI [1..]
 newToken _ c = c -- this is either a move-around or a non-sub-entity.
@@ -557,10 +559,10 @@ deleteCard s card = s
 	, codexes = [map (delete card) codex | codex <- codexes s]
 	, heroes = map (delete card) $ heroes s
 	}
-	
+
 removeSubEntitiesForCard :: CardTableState -> Card -> CardTableState
 removeSubEntitiesForCard s card = s { tokens = filter ((/= card) . snd) $ tokens s, exhaustedCards = delete card $ exhaustedCards s }
-	
+
 insertForIdx :: [[a]] -> Int -> a -> [[a]]
 insertForIdx list idx updater = take idx list ++ [(updater:(head $ drop idx list))] ++ drop (idx+1) list
 
@@ -580,11 +582,11 @@ shuffle :: [a] -> StdGen -> ([a], StdGen)
 shuffle [] r = ([], r)
 shuffle a r = (element:rest, r')
   where
-	(idx, r'') = randomR (0, length a - 1) r 
+	(idx, r'') = randomR (0, length a - 1) r
 	element = a !! idx
 	rest' = take idx a ++ drop (idx+1) a
 	(rest, r') = shuffle rest' r''
-	
+
 colorOfSpec :: CardSpec -> CardColor
 colorOfSpec NeutralSpec = NeutralColor
 colorOfSpec Anarchy = Red
@@ -605,7 +607,7 @@ colorOfSpec Strength = White
 colorOfSpec Disease = Black
 colorOfSpec Necromancy = Black
 colorOfSpec Demonology = Black
-	
+
 makeCardTable :: StdGen -> WithMemory Game
 makeCardTable generator = do
 	let deck = []
@@ -621,7 +623,7 @@ makeCardTable generator = do
 		, heroes = [[], []]
 		, workers = [[Card (UtilityCard BlankCard) (CI 40),Card (UtilityCard BlankCard) (CI 41),Card (UtilityCard BlankCard) (CI 42),Card (UtilityCard BlankCard) (CI 43)], [Card (UtilityCard BlankCard) (CI 44),Card (UtilityCard BlankCard) (CI 45),Card (UtilityCard BlankCard) (CI 46),Card (UtilityCard BlankCard) (CI 47)]]
 		, rng = generator
-		}		
+		}
 	return Game
 		{ playerRenderer = renderer
 		, getPlayers = (\_ -> [0, 1])
