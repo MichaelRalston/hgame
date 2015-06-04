@@ -50,7 +50,7 @@ data Game = forall state entity zone. (GameState state, EntityId entity, ZoneId 
 	}
 
 type GameDelta state entity zone = (state, [Gamelog entity zone], [GameMovement])
-type Screen zone entity = Map (zone) (ZoneDisplayData zone entity, [ScreenEntity entity])
+type Screen zone entity = Map zone (ZoneDisplayData zone entity, [ScreenEntity entity])
 type InputHandler state entity zone = state -> PlayerIndex -> UserInput entity zone -> WithMemory (GameDelta state entity zone)
 
 class (Eq entity, FromJSON entity, ToJSON entity, Show entity) => EntityId entity
@@ -167,7 +167,19 @@ instance ToJSON (ScreenEntitySize) where
 	toJSON (SESAutoWidth h) = object ["type" .= String "autoWidth", "height" .= h]
 
 instance EntityId entity => ToJSON (ScreenEntity entity) where
-	toJSON SE {eId, eDisplay, eSize, eClickable, eDraggable, eDropOnEntities, eEntitiesDropOn, eClasses, eNestOnEntity} = object ["entityId" .= eId, "display" .= eDisplay, "clickable" .= eClickable, "draggable" .= eDraggable, "size" .= eSize, "dropOnEntities" .= eDropOnEntities, "entitiesDropOn" .= eEntitiesDropOn, "classes" .= eClasses, "nestedEntity" .= maybe (Bool False) toJSON eNestOnEntity]
+	toJSON SE {eId, eDisplay, eSize, eClickable, eDraggable, eDropOnEntities, eEntitiesDropOn, eClasses, eNestOnEntity, ePosition} =
+		object
+			["entityId" .= eId
+			, "display" .= eDisplay
+			, "clickable" .= eClickable
+			, "draggable" .= eDraggable
+			, "size" .= eSize
+			, "dropOnEntities" .= eDropOnEntities
+			, "entitiesDropOn" .= eEntitiesDropOn
+			, "classes" .= eClasses
+			, "nestedEntity" .= maybe (Bool False) toJSON eNestOnEntity
+			, "position" .= maybe (Bool False) (\(l, t) -> object ["left" .= l, "top" .= t]) ePosition
+			]
 
 instance (EntityId entity, ZoneId zone) => ToJSON (Screen zone entity) where
 	toJSON screen = toJSON $ map renderScreenAssocs $ assocs screen

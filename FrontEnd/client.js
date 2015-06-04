@@ -93,6 +93,11 @@ function styleEntity($elem, entityJson) {
 	entityJson.classes.forEach(function(cn) {
 		$elem.addClass(cn);
 	});
+  if (entityJson.position) {
+    $elem.css('left', entityJson.position.left + '%');
+    $elem.css('top', entityJson.position.top + '%');
+    $elem.css('position', 'absolute');
+  }
 	switch (entityJson.size.type) {
 		case "percent":
 			$elem.width(entityJson.size.width+"%");
