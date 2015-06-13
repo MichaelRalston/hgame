@@ -79,7 +79,7 @@ data GameMovement
 data UserInput entity zone
 	= UIClick entity
 	| UIDrag entity zone
-	| UIDragEntity entity entity -- dragee, target.
+	| UIDragEntity entity entity Int Int -- dragee, target, x% y%
 	| UIText entity String
 	| UIDisconnected
 	| UIConnected
@@ -140,7 +140,7 @@ instance (EntityId entity, ZoneId zone) => FromJSON (UserInput entity zone) wher
 		case (action :: String) of
 			"click" -> UIClick <$> v .: "entity"
 			"drag" -> UIDrag <$> v .: "entity" <*> v .: "zone"
-			"dragEntity" -> UIDragEntity <$> v .: "entity" <*> v .: "target"
+			"dragEntity" -> UIDragEntity <$> v .: "entity" <*> v .: "target" <*> v .: "leftOffset" <*> v .: "topOffset"
 			"text" -> UIText <$> v .: "entity" <*> v .: "text"
 			_ -> fail "unknown action"
 	parseJSON _ = mzero

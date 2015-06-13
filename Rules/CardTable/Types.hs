@@ -17,7 +17,7 @@ module Rules.CardTable.Types
 	, CardIdentifier (..)
 	, SDCardType (..)
 	) where
-	
+
 import Engine.Types
 import Data.Aeson (ToJSON, FromJSON, Value(..), parseJSON)
 import Data.Text (pack, unpack, breakOn, breakOnEnd, drop, Text, append)
@@ -32,7 +32,7 @@ data CardTableState = CTS
 	, decks :: [[Card]]
 	, tables :: [[Card]]
 	, discards :: [[Card]]
-	, tokens :: [(Token, Card)]
+	, tokens :: [(Token, Card, Int, Int)]
 	, codexes :: [[[Card]]]
 	, exhaustedCards :: [Card]
 	, specs :: [[CardSpec]]
@@ -40,13 +40,13 @@ data CardTableState = CTS
 	, workers :: [[Card]]
 	, rng :: StdGen
 	}
-	
+
 data CardZone
 	= CZ CardZoneType PlayerIndex
 	| CZGamelog
 	| CZTokens
 	deriving (Show, Eq, Ord)
-	
+
 data CardZoneType
 	= CZHand
 	| CZPlay
@@ -58,7 +58,7 @@ data CardZoneType
 	| CZPlaymat
 	| CZWorkers
 	deriving (Show, Eq, Ord, Enum)
-	
+
 instance ZoneId CardZone
 
 instance ToJSON CardZone where
@@ -73,11 +73,11 @@ instance ToJSON CardZone where
 	toJSON (CZ CZPlaymat idx) = String $ pack $ "playmat-" ++ show idx
 	toJSON (CZGamelog) = String $ pack $ "gamelog"
 	toJSON (CZTokens) = String $ pack $ "tokens"
-	
+
 instance FromJSON CardZone where
 	parseJSON (String "tokens") = return $ CZTokens
 	parseJSON (String "gamelog") = return $ CZGamelog
-	parseJSON (String v) = 
+	parseJSON (String v) =
 		case (pfx, idx) of
 			(_, Nothing) -> mzero
 			("hand", Just index) -> return $ CZ CZHand index
@@ -95,7 +95,7 @@ instance FromJSON CardZone where
 			(_, num) = breakOnEnd "-" rst
 			(pfx, rst) = breakOn "-" v
 	parseJSON _ = mzero
-	
+
 data CardIndex = CI Int deriving (Show, Eq, Ord)
 data TokenIndex = TI Int deriving (Show, Eq, Ord)
 
@@ -127,7 +127,7 @@ data CardSpec
 	| Necromancy
 	| Demonology
 	deriving (Eq, Show, Enum, Ord)
-	
+
 data CardColor
 	= NeutralColor
 	| Red
@@ -137,7 +137,7 @@ data CardColor
 	| White
 	| Black
 	deriving (Eq, Show, Ord)
-	
+
 data CardType
 	= Hero
 	| Spell_1
@@ -172,7 +172,7 @@ data UtilityCardType
 	| BaseBuilding
 	| BlankCard
 	deriving (Eq, Show, Enum, Ord)
-	
+
 data SDCardType
 	= SDCard0
 	| SDCard1
@@ -185,7 +185,7 @@ data SDCardType
 	| SDCard8
 	| SDCard9
 	deriving (Eq, Show, Enum, Ord)
-	
+
 data TokenType
 	= Gold
 	| PlusOne
@@ -194,7 +194,7 @@ data TokenType
 	| Cooldown
 	| Sword
 	deriving (Eq, Show, Enum, Ord)
-	
+
 data Card = Card CardIdentifier CardIndex
 	deriving (Show, Eq)
 data CardIdentifier
@@ -220,11 +220,11 @@ instance Ord CardIdentifier where
 	compare (UtilityCard _) (SDCard _ _) = GT
 	compare (SDCard _ _) (UtilityCard _) = LT
 	compare (SDCard c t) (SDCard c2 t2) = thenCmp (compare c c2) (compare t t2)
-	
+
 class Encodable a where
 	encode :: a -> Text
 	decode :: Text -> Maybe a
-	
+
 makeEncodable ''CardSpec
 	[ ('NeutralSpec, "neutral")
 	, ('Anarchy, "anarchy")
@@ -246,11 +246,11 @@ makeEncodable ''CardSpec
 	, ('Necromancy, "necromancy")
 	, ('Demonology, "demonology")
 	]
-	
+
 instance Encodable CardIndex where
 	encode (CI i) = pack $ show i
 	decode s = CI <$> (readMaybe $ unpack s)
-	
+
 instance Encodable TokenIndex where
 	encode (TI i) = pack $ show i
 	decode s = TI <$> (readMaybe $ unpack s)
@@ -271,7 +271,7 @@ makeEncodable ''CardType
 	, ('Tech_3, "tech3")
 	, ('SpecToken, "spec")
 	]
-	
+
 makeEncodable ''SDCardType
 	[ ('SDCard0, "sdcard0")
 	, ('SDCard1, "sdcard1")
@@ -284,7 +284,7 @@ makeEncodable ''SDCardType
 	, ('SDCard8, "sdcard8")
 	, ('SDCard9, "sdcard9")
 	]
-	
+
 makeEncodable ''CardColor
 	[ ('NeutralColor, "neutral")
 	, ('Red, "red")
@@ -294,7 +294,7 @@ makeEncodable ''CardColor
 	, ('White, "white")
 	, ('Black, "black")
 	]
-	
+
 makeEncodable ''UtilityCardType
 	[ ('CodexHolder, "codex")
 	, ('Hero_1_Holder, "hero1")
@@ -312,7 +312,7 @@ makeEncodable ''UtilityCardType
 	, ('BaseBuilding, "base")
 	, ('BlankCard, "blank")
 	]
-	
+
 makeEncodable ''TokenType
 	[ ('Gold, "gold")
 	, ('PlusOne, "plus")
@@ -321,13 +321,13 @@ makeEncodable ''TokenType
 	, ('Cooldown, "cooldown")
 	, ('Sword, "sword")
 	]
-	
+
 instance ToJSON CardEntity where
 	toJSON (CECard (Card (CodexCard spec rank) idx)) = String $ "codexcard-" `append` encode spec `append` "-" `append` encode rank `append` "-" `append` encode idx
 	toJSON (CECard (Card (UtilityCard uct) idx)) = String $ "utility-" `append` encode uct `append` "-" `append` encode idx
 	toJSON (CECard (Card (SDCard color sdtype) idx)) = String $ "sdcard-" `append` encode color `append` "-" `append` encode sdtype `append` "-" `append` encode idx
 	toJSON (CEToken (Token setype idx)) = String $ "token-" `append` encode setype `append` "-" `append` encode idx
-	
+
 instance FromJSON CardEntity where
 	parseJSON (String v) =
 		case entityType of
@@ -362,9 +362,9 @@ instance FromJSON CardEntity where
 				(_, num) = breakOnEnd "-" rest
 				(setype, rest) = breakOn "-" $ Data.Text.drop 1 $ rst
 			_ -> mzero
-		  where			
+		  where
 			(entityType, rst) = breakOn "-" v
 	parseJSON _ = mzero
 
-	
+
 instance GameState CardTableState

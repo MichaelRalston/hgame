@@ -31,7 +31,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
   where
 	tokens' =
 		[ (CZTokens, (ZDD {display = ZDHorizFill 10, order= -1, classNames = ["display-inline", "margin-onepx", "bordered"], droppable = False}
-			, [renderToken Nothing $ Token tokenType $ TI 0 | tokenType <- [Gold .. Sword]]
+			, [renderToken Nothing (Token tokenType $ TI 0) Nothing | tokenType <- [Gold .. Sword]]
 			++ [renderCard CZDiscard [] $ Card (CodexCard spec SpecToken) $ CI 0 | spec <- [NeutralSpec .. Demonology]] )
 		  )
 		]
@@ -47,7 +47,7 @@ renderer (CTS {hands, decks, tables, discards, tokens, codexes, exhaustedCards, 
 
 data RenderType = ConcealAll | ConcealExcept PlayerIndex | Show
 
-makePlaymat :: PlayerIndex -> [(Token, Card)] -> [Card] -> [CardSpec] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
+makePlaymat :: PlayerIndex -> [(Token, Card, Int, Int)] -> [Card] -> [CardSpec] -> [(CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))]
 makePlaymat pid tokens heroes specs =
 	[ (CZ CZCodexHolder pid, (zoneDisplay CZCodexHolder pid, [(renderCard CZPlaymat [] $ Card (UtilityCard CodexHolder) $ CI pid) {eSize = SESPercent 100 10}]))
 	, (CZ CZPlaymat pid, (zoneDisplay CZPlaymat pid, map (renderCard CZPlaymat []) (commandCards ++ playmatCards) ++ renderTokensForCards tokens (playmatCards ++ heroes)))
@@ -69,8 +69,8 @@ makePlaymat pid tokens heroes specs =
 		(map (\card -> Card (UtilityCard card) (CI pid)) [Hero_1_Holder .. Hero_3_Holder])
 		(map (\spec -> Card (CodexCard spec Hero) (CI pid)) specs)
 
-renderTokensForCards :: [(Token, Card)] -> [Card] -> [ScreenEntity CardEntity]
-renderTokensForCards tokens cards = map (\(token, card) -> renderToken (Just card) token) (filter (\(_, card) -> elem card cards) tokens)
+renderTokensForCards :: [(Token, Card, Int, Int)] -> [Card] -> [ScreenEntity CardEntity]
+renderTokensForCards tokens cards = map (\(token, card, x, y) -> renderToken (Just card) token $ Just (x, y)) (filter (\(_, card, _, _) -> elem card cards) tokens)
 
 renderZone
 	:: RenderType
@@ -78,7 +78,7 @@ renderZone
 	-> [Card]
 	-> PlayerIndex -- controller of the zone in question.
 	-> [Card]
-	-> [(Token, Card)]
+	-> [(Token, Card, Int, Int)]
 	-> (CardZone, (ZoneDisplayData CardZone CardEntity, [ScreenEntity CardEntity]))
 renderZone Show t exhaustedCards p cards tokens = (CZ t p, (zoneDisplay t p, map (renderCard t exhaustedCards) cards ++ renderTokensForCards tokens cards))
 renderZone ConcealAll t _ p cards _ = (CZ t p, (zoneDisplay t p, [cardCounter p t (length cards)]))
@@ -130,8 +130,8 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 		, eClasses = if c `elem` exhaustedCards then ["greyscale"] else []
 		}
 
-renderToken :: Maybe Card -> Token -> ScreenEntity CardEntity
-renderToken card token@(Token tokenType _) =
+renderToken :: Maybe Card -> Token -> Maybe (Int, Int) -> ScreenEntity CardEntity
+renderToken card token@(Token tokenType _) pos =
 	SE
 		{ eId = CEToken token
 		, eDisplay = case tokenType of
@@ -141,7 +141,7 @@ renderToken card token@(Token tokenType _) =
 			Cooldown -> SDImage "images/tokens/Cooldown.png"
 			_ -> SDImage "images/placeholder.jpg"
 		, eSize = SESAutoWidth 23
-		, ePosition = Nothing
+		, ePosition = pos
 		, eEntitiesDropOn = False
 		, eDropOnEntities = True
 		, eDraggable = True
@@ -501,16 +501,20 @@ inputHandler s@(CTS{exhaustedCards}) pid (UIClick (CECard card)) = return $ case
 	(False, True) -> (moveCard s card $ CZ CZDiscard pid, moveCardEntityDisplay s pid (CECard card) $ CZ CZDiscard pid, [])
 	_ -> (s, [], [])
 inputHandler s _ (UIClick (CEToken _)) = return (s, [], []) -- TODO: click on the underlying?
-inputHandler s _ (UIDragEntity _ (CEToken _)) = return (s, [], []) -- TODO: pass to the underlying?
-inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return $ if inSight s card
-	then (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
+inputHandler s _ (UIDragEntity _ (CEToken _) _ _) = return (s, [], []) -- TODO: pass to the underlying?
+inputHandler s pid (UIDragEntity (CEToken entity) (CECard card) x y) = return $ if inSight s card
+	then ( s { tokens = (newToken s entity, card, x, y):(tokens $ removeToken s entity)}
+			 , [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
 	else (s, [], [])
-inputHandler s _ (UIDragEntity (CEToken _) (CECard (Card (UtilityCard CodexHolder) _))) = return (s, [], [])
-inputHandler s pid (UIDragEntity (CEToken entity) (CECard card)) = return (s { tokens = (newToken s entity, card):(tokens $ removeToken s entity)}, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]], [])
-inputHandler s _ (UIDragEntity (CECard _) (CECard _)) = return (s, [], [])
+inputHandler s _ (UIDragEntity (CEToken _) (CECard (Card (UtilityCard CodexHolder) _)) _ _) = return (s, [], [])
+inputHandler s pid (UIDragEntity (CEToken entity) (CECard card) x y) = return
+	(s { tokens = (newToken s entity, card, x, y):(tokens $ removeToken s entity)}
+	, [GLBroadcast [GLMPlayerAction pid ("put " ++ nameToken entity ++ " on " ++ nameCard card) CZGamelog]]
+	, [])
+inputHandler s _ (UIDragEntity (CECard _) (CECard _) _ _) = return (s, [], [])
 
 newToken :: CardTableState -> Token -> Token
-newToken s (Token subEntityType (TI 0)) = head $ filter (\se -> all ((/= se) . fst) $ tokens s) $ map (Token subEntityType) $ map TI [1..]
+newToken s (Token subEntityType (TI 0)) = head $ filter (\se -> all ((/= se) . (\(f, _, _, _) -> f)) $ tokens s) $ map (Token subEntityType) $ map TI [1..]
 newToken _ c = c -- this is either a move-around or a non-sub-entity.
 
 moveCardEntityDisplay :: CardTableState -> PlayerIndex -> CardEntity -> CardZone -> [Gamelog CardEntity CardZone]
@@ -528,7 +532,7 @@ nameCardEntity (CECard c) = nameCard c
 nameCardEntity (CEToken t) = nameToken t
 
 removeToken :: CardTableState -> Token -> CardTableState
-removeToken s se = s {tokens = filter ((/= se) . fst) (tokens s)}
+removeToken s se = s {tokens = filter ((/= se) . (\(f, _, _, _) -> f)) (tokens s)}
 
 inPlay :: CardTableState -> Card -> Bool
 inPlay s card = True `elem` map (elem card) (tables s)
@@ -561,7 +565,7 @@ deleteCard s card = s
 	}
 
 removeSubEntitiesForCard :: CardTableState -> Card -> CardTableState
-removeSubEntitiesForCard s card = s { tokens = filter ((/= card) . snd) $ tokens s, exhaustedCards = delete card $ exhaustedCards s }
+removeSubEntitiesForCard s card = s { tokens = filter ((/= card) . (\(_, a, _, _) -> a)) $ tokens s, exhaustedCards = delete card $ exhaustedCards s }
 
 insertForIdx :: [[a]] -> Int -> a -> [[a]]
 insertForIdx list idx updater = take idx list ++ [(updater:(head $ drop idx list))] ++ drop (idx+1) list

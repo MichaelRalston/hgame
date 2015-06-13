@@ -40,7 +40,11 @@ function makeEntityDroppable($elem, entityId) {
 		drop: function(event, ui) {
 			if (!$elem.is(ui.draggable.parent())) {
 				var id = ui.draggable.attr('id');
-				sendMsg({'action':'dragEntity','target':entityId,'entity':id.slice(7)});
+        var ydelta = ui.offset.top - $elem.offset().top;
+        var xdelta = ui.offset.left - $elem.offset().left;
+        var ypercent = Math.floor(ydelta / $elem.height());
+        var xpercent = Math.floor(xdelta / $elem.width());
+				sendMsg({'action':'dragEntity','target':entityId,'entity':id.slice(7),'topOffset':ypercent,'leftOffset':xpercent});
 			}
 		},
 		tolerance: 'pointer',
