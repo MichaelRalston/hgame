@@ -42,8 +42,8 @@ function makeEntityDroppable($elem, entityId) {
 				var id = ui.draggable.attr('id');
         var ydelta = ui.offset.top - $elem.offset().top;
         var xdelta = ui.offset.left - $elem.offset().left;
-        var ypercent = Math.floor(ydelta / $elem.height());
-        var xpercent = Math.floor(xdelta / $elem.width());
+        var ypercent = Math.floor(100 * ydelta / $elem.height());
+        var xpercent = Math.floor(100 * xdelta / $elem.width());
 				sendMsg({'action':'dragEntity','target':entityId,'entity':id.slice(7),'topOffset':ypercent,'leftOffset':xpercent});
 			}
 		},
