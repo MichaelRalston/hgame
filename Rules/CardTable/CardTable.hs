@@ -54,16 +54,7 @@ makePlaymat pid tokens heroes specs =
 	]
   where
 	playmatCards =
-		[ Card (UtilityCard Tech_3_1_Building) $ CI pid
-		, Card (UtilityCard Tech_3_2_Building) $ CI pid
-		, Card (UtilityCard Tech_3_3_Building) $ CI pid
-		, Card (UtilityCard Tech_2_1_Building) $ CI pid
-		, Card (UtilityCard Tech_2_2_Building) $ CI pid
-		, Card (UtilityCard Tech_2_3_Building) $ CI pid
-		, Card (UtilityCard SurplusBuilding) $ CI pid
-		, Card (UtilityCard Tech_1_Building) $ CI pid
-		, Card (UtilityCard TowerBuilding) $ CI pid
-		, Card (UtilityCard BaseBuilding) $ CI pid
+		[ Card (UtilityCard BaseBuilding) $ CI pid
 		]
 	commandCards = zipWith (\def card -> if card `elem` heroes then card else def)
 		(map (\card -> Card (UtilityCard card) (CI pid)) [Hero_1_Holder .. Hero_3_Holder])
@@ -95,16 +86,7 @@ renderCard t exhaustedCards c@(Card cardType _)  =
 			(UtilityCard Hero_1_Holder, _) -> SESPercent 20 33
 			(UtilityCard Hero_2_Holder, _) -> SESPercent 20 33
 			(UtilityCard Hero_3_Holder, _) -> SESPercent 20 33
-			(UtilityCard Tech_3_1_Building, _) -> SESPercent 20 33
-			(UtilityCard Tech_3_2_Building, _) -> SESPercent 20 33
-			(UtilityCard Tech_3_3_Building, _) -> SESPercent 20 33
-			(UtilityCard Tech_2_1_Building, _) -> SESPercent 20 33
-			(UtilityCard Tech_2_2_Building, _) -> SESPercent 20 33
-			(UtilityCard Tech_2_3_Building, _) -> SESPercent 20 33
-			(UtilityCard SurplusBuilding, _) -> SESPercent 20 33
-			(UtilityCard Tech_1_Building, _) -> SESPercent 20 33
-			(UtilityCard TowerBuilding, _) -> SESPercent 20 33
-			(UtilityCard BaseBuilding, _) -> SESPercent 19 95
+			(UtilityCard BaseBuilding, _) -> SESPercent 79 95
 			(CodexCard _ Hero, CZPlaymat) -> SESPercent 20 33
 			(_, CZHand) -> SESAutoWidth 95
 			(_, CZPlay) -> SESAutoWidth 44

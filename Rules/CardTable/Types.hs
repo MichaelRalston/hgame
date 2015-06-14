@@ -160,15 +160,6 @@ data UtilityCardType
 	| Hero_1_Holder
 	| Hero_2_Holder
 	| Hero_3_Holder
-	| Tech_3_1_Building
-	| Tech_3_2_Building
-	| Tech_3_3_Building
-	| Tech_2_1_Building
-	| Tech_2_2_Building
-	| Tech_2_3_Building
-	| SurplusBuilding
-	| Tech_1_Building
-	| TowerBuilding
 	| BaseBuilding
 	| BlankCard
 	deriving (Eq, Show, Enum, Ord)
@@ -300,15 +291,6 @@ makeEncodable ''UtilityCardType
 	, ('Hero_1_Holder, "hero1")
 	, ('Hero_2_Holder, "hero2")
 	, ('Hero_3_Holder, "hero3")
-	, ('Tech_3_1_Building, "tech31")
-	, ('Tech_3_2_Building, "tech32")
-	, ('Tech_3_3_Building, "tech33")
-	, ('Tech_2_1_Building, "tech21")
-	, ('Tech_2_2_Building, "tech22")
-	, ('Tech_2_3_Building, "tech23")
-	, ('SurplusBuilding, "surplus")
-	, ('Tech_1_Building, "tech1")
-	, ('TowerBuilding, "tower")
 	, ('BaseBuilding, "base")
 	, ('BlankCard, "blank")
 	]
